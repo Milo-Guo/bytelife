@@ -12,7 +12,8 @@ concurrency:
   cancel-in-progress: true
 jobs:
   publish:
-    runs-on: ubuntu-latest
+    # 静态文章只需轻量构建，使用容器执行环境，避免等待整台虚拟机。
+    runs-on: ubuntu-slim
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
