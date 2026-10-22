@@ -113,7 +113,15 @@ ZIP 版启动器应先解压到固定目录再运行。别在压缩包预览窗�
 6. 点这条配置右侧的 **… → Edit / 编辑**，名称改为 `1.21.1-Fabric-Learn`，**Game Directory / 游戏目录**填 `D:\Minecraft\Instances\1.21.1-Fabric-Learn`，保存。
 7. 从 **Play / 开始游戏**页选择它启动一次。能进入菜单和测试世界，再正常退出。
 
-以上安装顺序对应 [Fabric 官方 Windows 安装指南](https://docs.fabricmc.net/players/installing-fabric/windows)。指南截图可能展示别的游戏版本，本文仍选 1.21.1。Windows EXE 安装器可使用官方启动器带的 Java；开发所需 JDK 21 后面另装。
+![Fabric 安装器：客户端、游戏版本、安装目录与 Create Profile](../assets/images/minecraft-mod/fabric-official-installer-screen.png)
+
+*Fabric 官方文档中的实际界面图。图里是 1.20.4，本文在 Minecraft Version 选择 1.21.1；不要照抄图中的 Loader 号和用户名路径。来源：[Fabric Windows 指南](https://docs.fabricmc.net/players/installing-fabric/windows)，按 [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/) 转载，未修改。*
+
+![官方启动器中选择 Fabric 配置后启动](../assets/images/minecraft-mod/fabric-official-launcher-screen.png)
+
+*同一指南的启动器示例：左侧 Java Edition，上方 Installations，左下配置下拉框，右边 PLAY。它展示的是旧版外观，本文选自己的 1.21.1 Fabric 配置。来源及许可同上，未修改。*
+
+以上安装顺序对应 [Fabric 官方 Windows 安装指南](https://docs.fabricmc.net/players/installing-fabric/windows)。Windows EXE 安装器可使用官方启动器带的 Java；开发所需 JDK 21 后面另装。
 
 ### 4.3 Fabric API 还要单独安装
 
