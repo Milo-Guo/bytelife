@@ -189,8 +189,9 @@ def main():
     (OUT/'migration').mkdir(exist_ok=True)
     (OUT/'migration'/'index.html').write_text(shell('从论坛迁到这里', 'ByteLife 公开文章、配图和历史版本的迁移记录。', f'<main id="main" class="single-page"><a href="{BASE}" class="back-link">← 回到首页</a><article class="prose">{html}</article></main>', 'migration/'), encoding='utf-8')
     (OUT/'404.html').write_text(shell('这一页没找到', '返回 ByteLife 文章目录。', f'<main id="main" class="single-page"><h1>这一页没找到。</h1><p>文章可能换过地址。<a href="{BASE}">回首页查找</a>。</p></main>', '404.html', noindex=True), encoding='utf-8')
-    links = [ORIGIN+BASE] + [ORIGIN+public_url(a['slug']) for a in articles]
-    sitemap = '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'+''.join(f'<url><loc>{url}</loc><lastmod>2026-10-22</lastmod></url>' for url in links)+'</urlset>'
+    latest = max(a['updated'] for a in articles)
+    links = [(ORIGIN+BASE, latest)] + [(ORIGIN+public_url(a['slug']), a['updated']) for a in articles]
+    sitemap = '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'+''.join(f'<url><loc>{url}</loc><lastmod>{updated}</lastmod></url>' for url, updated in links)+'</urlset>'
     (OUT/'sitemap.xml').write_text(sitemap, encoding='utf-8')
     (OUT/'robots.txt').write_text(f'User-agent: *\nAllow: /\nSitemap: {ORIGIN}{BASE}sitemap.xml\n', encoding='utf-8')
     rss = '<?xml version="1.0" encoding="UTF-8"?><rss version="2.0"><channel><title>ByteLife</title><link>'+ORIGIN+BASE+'</link><description>Milo 的学习与生活记录</description>'

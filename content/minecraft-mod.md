@@ -27,10 +27,10 @@
 | 名称 | 管什么 | 这篇怎么用 |
 | --- | --- | --- |
 | Minecraft Java Edition | 游戏本体 | 固定 1.21.1 做开发练习 |
-| PCL | 下载、登录、选择版本、管理游戏环境 | 日常游玩和检查发布后的模组 |
+| 启动器 | 登录、选择版本和管理游戏环境；下载能力看当前工具 | 本文新装用官方启动器，旧版 PCL 用户可保留已有环境 |
 | Java / JVM | 运行 Java 程序 | 让游戏和构建工具运行 |
 | JDK | Java 开发工具，包含编译器等 | 写模组用 JDK 21 |
-| Fabric Loader | 把 Fabric 模组加载进游戏 | 通过 PCL 安装 |
+| Fabric Loader | 把 Fabric 模组加载进游戏 | 本文新装用 Fabric 安装器，已有实例核对版本即可 |
 | Fabric API | 提供很多模组共用的功能接口 | 作为依赖安装，和 Loader 是两样东西 |
 | Mod / 模组 | 添加或修改游戏行为 | 通常是放在 `mods` 里的 `.jar` |
 | 资源包 | 纹理、声音、语言等资源 | 放在 `resourcepacks`，游戏里启用 |
@@ -786,9 +786,7 @@ bytelife-notes-1.0.0-sources.jar
 
 ---
 
-**[继续阅读：樱花穿透联机、独立开服与排错 →](../content/minecraft-mod.md)**
 
-接上文：[返回安装与模组开发主楼](../content/minecraft-mod.md)。
 
 
 <a name="mc-section-21"></a>
