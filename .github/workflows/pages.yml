@@ -1,0 +1,38 @@
+name: 发布 ByteLife
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: pages
+  cancel-in-progress: false
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+          cache: pip
+      - name: 配置 Pages
+        uses: actions/configure-pages@v5
+      - name: 安装 Markdown 渲染器
+        run: python -m pip install -r requirements.txt
+      - name: 构建并检查文章链接
+        run: |
+          python scripts/build.py
+          python scripts/check.py
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: _site
+      - name: 发布网站
+        id: deployment
+        uses: actions/deploy-pages@v4

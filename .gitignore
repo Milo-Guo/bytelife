@@ -1,0 +1,8 @@
+_site/
+__pycache__/
+.venv/
+*.sql
+*.sql.gz
+*.tar.gz
+.env
+.env.*
