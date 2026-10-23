@@ -19,7 +19,7 @@ jobs:
       contents: read
     steps:
       # 第三方动作固定到完整提交 SHA，注释是对应的发布版本；升级时一起改。
-      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
           # 取完整历史，文章页的“修改记录”从 Git 提交里生成。
