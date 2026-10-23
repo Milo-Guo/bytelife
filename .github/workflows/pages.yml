@@ -2,38 +2,55 @@ name: 发布 ByteLife
 on:
   push:
     branches: [main]
+  # PR 只构建和检查，不发布；来自 fork 的 PR 拿到的是只读令牌，也没有发布权限。
+  pull_request:
+    branches: [main]
   workflow_dispatch:
-permissions:
-  contents: read
-  pages: write
-  id-token: write
+# 默认不给任何权限，各任务再单独申请。
+permissions: {}
 concurrency:
   group: bytelife-pages-${{ github.ref }}
   cancel-in-progress: true
 jobs:
-  publish:
-    # 静态文章只需轻量构建，使用容器执行环境，避免等待整台虚拟机。
+  build:
+    # 安装依赖、运行仓库脚本都在这里，只有读取仓库的权限。
     runs-on: ubuntu-slim
+    permissions:
+      contents: read
+    steps:
+      # 第三方动作固定到完整提交 SHA，注释是对应的发布版本；升级时一起改。
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          persist-credentials: false
+          # 取完整历史，文章页的“修改记录”从 Git 提交里生成。
+          fetch-depth: 0
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: '3.12'
+      - name: 安装 Markdown 渲染器（核对哈希）
+        run: python -m pip install --require-hashes --no-deps -r requirements.txt
+      - name: 构建、检查并运行安全回归测试
+        run: |
+          python scripts/build.py
+          python scripts/check.py
+          python scripts/test_build.py
+      - name: 上传网站文件
+        if: github.event_name != 'pull_request'
+        uses: actions/upload-pages-artifact@7b1f4a764d45c48632c6b24a0339c27f5614fb0b # v4.0.0
+        with:
+          path: _site
+  deploy:
+    # 只发布 main；这个任务不检出、不运行仓库代码，只拿发布需要的两项权限。
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    needs: build
+    runs-on: ubuntu-slim
+    permissions:
+      pages: write
+      id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-python@v7
-        with:
-          python-version: '3.12'
-          cache: pip
-      - name: 配置 Pages
-        uses: actions/configure-pages@v5
-      - name: 安装 Markdown 渲染器
-        run: python -m pip install -r requirements.txt
-      - name: 构建并检查文章链接
-        run: |
-          python scripts/build.py
-          python scripts/check.py
-      - uses: actions/upload-pages-artifact@v4
-        with:
-          path: _site
       - name: 发布网站
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e # v4.0.5

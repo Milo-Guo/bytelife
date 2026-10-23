@@ -1,0 +1,72 @@
+name: 新建文章
+# 在 GitHub 网页上：Actions → 新建文章 → Run workflow，填表后会生成文章模板，并在 articles.json 里登记为草稿。
+# 只有对仓库有写权限的人能运行。填的内容通过环境变量传给脚本，不会被当成命令执行。
+on:
+  workflow_dispatch:
+    inputs:
+      slug:
+        description: 英文文件名（小写字母、数字、连字符，例如 tomato-egg），也是网址的一部分
+        required: true
+      title:
+        description: 标题
+        required: true
+      category:
+        description: 分类（例如 编程、Windows、做菜、生活）
+        required: true
+      type:
+        description: 类型：tutorial 教程 / recipe 食谱 / post 随笔
+        required: true
+        type: choice
+        options: [tutorial, recipe, post]
+      summary:
+        description: 一句话摘要（显示在首页列表里）
+        required: true
+      servings:
+        description: 食谱份量，例如“2 人份”（可不填）
+        required: false
+      minutes:
+        description: 食谱大约用时，只写数字，单位分钟（可不填）
+        required: false
+permissions: {}
+concurrency:
+  group: bytelife-new-article
+  cancel-in-progress: false
+jobs:
+  create:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-slim
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: '3.12'
+      - name: 安装 Markdown 渲染器（核对哈希）
+        run: python -m pip install --require-hashes --no-deps -r requirements.txt
+      - name: 生成草稿
+        env:
+          SLUG: ${{ inputs.slug }}
+          TITLE: ${{ inputs.title }}
+          CATEGORY: ${{ inputs.category }}
+          TYPE: ${{ inputs.type }}
+          SUMMARY: ${{ inputs.summary }}
+          SERVINGS: ${{ inputs.servings }}
+          MINUTES: ${{ inputs.minutes }}
+        run: |
+          args=(--slug "$SLUG" --title "$TITLE" --category "$CATEGORY" --type "$TYPE" --summary "$SUMMARY")
+          if [ -n "$SERVINGS" ]; then args+=(--servings "$SERVINGS"); fi
+          if [ -n "$MINUTES" ]; then args+=(--minutes "$MINUTES"); fi
+          python scripts/new.py "${args[@]}"
+          python scripts/build.py
+          python scripts/check.py
+      - name: 提交草稿
+        env:
+          SLUG: ${{ inputs.slug }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "content/$SLUG.md" articles.json
+          git commit -m "新建草稿：$SLUG"
+          git push
+          echo "已新建草稿 content/$SLUG.md。用网站的写作页（/bytelife/write/?a=$SLUG）或 GitHub 网页编辑正文。" >> "$GITHUB_STEP_SUMMARY"

@@ -1,0 +1,12 @@
+# 每月检查一次发布流程里的官方动作和 Python 依赖，有新版本时开 PR（同时更新 SHA 和哈希）。
+# PR 会自动跑构建检查，确认通过再合并。不想要这类 PR，删掉本文件即可。
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+  - package-ecosystem: pip
+    directory: /
+    schedule:
+      interval: monthly

@@ -1,23 +1,163 @@
-"""把 Markdown 文章构建成可直接部署到 GitHub Pages 的静态网站。"""
-from datetime import datetime
+"""把 Markdown 文章构建成可直接部署到 GitHub Pages 的静态网站。
+
+内容只来自仓库里的 content/、archive/、MIGRATION.md 和 articles.json。
+构建会校验文章元数据，过滤正文里的原生 HTML，并且只把网页需要的文件写进 _site/。
+"""
+import argparse
+from base64 import b64encode
+from datetime import date, datetime, timedelta, timezone
+from email.utils import format_datetime
+from hashlib import sha256
 from html import escape
 from html.parser import HTMLParser
 import json
 from pathlib import Path
 import re
 import shutil
-from urllib.parse import quote
+import struct
+import subprocess
+import sys
+from urllib.parse import quote, unquote
 from xml.sax.saxutils import escape as xml_escape
 
 from markdown_it import MarkdownIt
+from markdown_it.token import Token
 
 ROOT = Path(__file__).resolve().parent.parent
+CONTENT = ROOT/'content'
+ASSETS = ROOT/'assets'
 OUT = ROOT/'_site'
 BASE = '/bytelife/'
 ORIGIN = 'https://milo-guo.github.io'
 REPO = 'https://github.com/Milo-Guo/bytelife'
 MD = MarkdownIt('commonmark', {'html': True, 'breaks': False}).enable('table').enable('strikethrough')
+ALL = '全部'
 
+# 首屏前同步执行：标记 JS 可用，并套用读者手动选过的主题，避免刷新时先闪一下浅色。
+# 改动这段文字后，CSP 里的哈希会自动重新计算。
+THEME_SCRIPT = ("(function(){var d=document.documentElement;d.classList.add('js');"
+                "try{var t=localStorage.getItem('bytelife-theme');if(t==='light'||t==='dark')d.dataset.theme=t}catch(e){}})();")
+THEME_HASH = 'sha256-'+b64encode(sha256(THEME_SCRIPT.encode()).digest()).decode()
+# GitHub Pages 不能自定义响应头，只能用 meta 声明。meta 版 CSP 不支持 frame-ancestors 和违规上报。
+CSP = '; '.join([
+    "default-src 'none'",
+    f"script-src 'self' '{THEME_HASH}'",
+    "style-src 'self'",
+    "img-src 'self'",
+    "connect-src 'self'",
+    "base-uri 'none'",
+    "form-action 'none'",
+    "require-trusted-types-for 'script'",
+    "trusted-types 'none'",
+])
+# 写作页要向 GitHub 接口读写文章，只在这一页放开 api.github.com，并只允许名为 bytelife-preview 的
+# Trusted Types 策略把预览 HTML 写进页面。
+EDITOR_CSP = (CSP.replace("connect-src 'self'", "connect-src 'self' https://api.github.com")
+              .replace("trusted-types 'none'", "trusted-types bytelife-preview"))
+THEME_COLORS = {'light': '#f7f6f3', 'dark': '#131416'}
+ASSET_URLS = {name: BASE+'assets/'+name for name in ('site.css', 'site.js', 'editor.css', 'editor.js')}
+VENDOR_MARKDOWN_IT = 'vendor/markdown-it-14.3.3.min.js'
+# 写作页预览用的 markdown-it 前端版，取自 npm 官方包，文件哈希写在这里，check.py 会核对。
+VENDOR_HASHES = {VENDOR_MARKDOWN_IT: '494ba53db1aac9f676317dda7062bd9545b5f0bbe3f12b0ab1ab4f813825cfb0'}
+
+
+class BuildError(SystemExit):
+    pass
+
+
+# ---------- 原生 HTML 白名单 ----------
+
+# 文章里允许少量原生 HTML。名单外的标签去掉、文字保留；脚本类标签连同内容一起丢弃。
+ALLOWED_TAGS = {
+    'a': {'href', 'title', 'id', 'name'}, 'abbr': {'title'}, 'b': set(), 'br': set(), 'code': set(),
+    'del': set(), 'details': {'open'}, 'div': {'id'}, 'em': set(), 'i': set(),
+    'img': {'src', 'alt', 'title', 'width', 'height'}, 'ins': set(), 'kbd': set(), 'mark': set(),
+    'p': {'id'}, 'small': set(), 'span': {'id'}, 'strong': set(), 'sub': set(), 'summary': set(),
+    'sup': set(), 'u': set(),
+}
+DROP_WITH_CONTENT = {'script', 'style', 'iframe', 'frame', 'frameset', 'object', 'embed', 'applet', 'template',
+                     'noscript', 'noembed', 'noframes', 'textarea', 'title', 'xmp', 'plaintext', 'svg', 'math', 'select'}
+VOID_TAGS = {'br', 'img', 'hr', 'wbr', 'input', 'meta', 'link', 'base', 'source', 'track', 'area', 'col', 'param'}
+SAFE_ID = re.compile(r'[A-Za-z\u4e00-\u9fff][\w\u4e00-\u9fff:.-]{0,100}\Z')
+SAFE_SCHEMES = {'http', 'https', 'mailto'}
+
+
+def safe_url(url):
+    """危险协议返回 None；站内路径、锚点和 http(s)/mailto 保留。HTML 转义在输出时另做。"""
+    # 浏览器解析网址时会去掉首尾控制字符和中间的换行、制表符，这里按同样规则判断协议。
+    cleaned = re.sub(r'[\t\n\r]', '', re.sub(r'^[\x00-\x20]+|[\x00-\x20]+$', '', url))
+    scheme = re.match(r'([A-Za-z][A-Za-z0-9+.-]*):', cleaned)
+    if scheme and scheme[1].lower() not in SAFE_SCHEMES:
+        return None
+    return cleaned
+
+
+class Sanitizer(HTMLParser):
+    def __init__(self, used_ids):
+        super().__init__(convert_charrefs=True)
+        self.out = []
+        self.used_ids = used_ids
+        self.skip_tag = None
+        self.skip_depth = 0
+
+    def handle_starttag(self, tag, attrs):
+        if self.skip_depth:
+            self.skip_depth += tag == self.skip_tag
+            return
+        if tag in DROP_WITH_CONTENT:
+            if tag not in VOID_TAGS:
+                self.skip_tag, self.skip_depth = tag, 1
+            return
+        if tag not in ALLOWED_TAGS:
+            return
+        kept = {}
+        for name, value in attrs:
+            name = name.lower()
+            if name not in ALLOWED_TAGS[tag] or name in kept:
+                continue
+            if value is None:
+                if name == 'open':
+                    kept[name] = ''
+                continue
+            if name in ('href', 'src'):
+                value = safe_url(convert_link(value))
+                if value is None:
+                    continue
+            elif name in ('id', 'name'):
+                # 旧论坛的 <a name> 锚点统一换成 id，原来的章节直达地址继续有效。
+                name = 'id'
+                if 'id' in kept or not SAFE_ID.match(value) or value in self.used_ids:
+                    continue
+                self.used_ids.add(value)
+            elif name in ('width', 'height') and not value.isdigit():
+                continue
+            kept[name] = value
+        self.out.append('<'+tag+''.join(f' {name}="{escape(value)}"' for name, value in kept.items())+'>')
+
+    def handle_startendtag(self, tag, attrs):
+        # HTML 里非空元素写成 <span/> 也不会自闭合，按普通开始标签处理，和浏览器一致。
+        self.handle_starttag(tag, attrs)
+
+    def handle_endtag(self, tag):
+        if self.skip_depth:
+            self.skip_depth -= tag == self.skip_tag
+            return
+        if tag in ALLOWED_TAGS and tag not in VOID_TAGS:
+            self.out.append(f'</{tag}>')
+
+    def handle_data(self, data):
+        if not self.skip_depth:
+            self.out.append(escape(data, quote=False))
+
+
+def sanitize_html(fragment, used_ids=None):
+    parser = Sanitizer(set() if used_ids is None else used_ids)
+    parser.feed(fragment)
+    parser.close()
+    return ''.join(parser.out)
+
+
+# ---------- 正文渲染 ----------
 
 class PlainText(HTMLParser):
     def __init__(self):
@@ -51,25 +191,205 @@ def convert_link(url):
     return url
 
 
+def image_size(path):
+    """读取 PNG、JPEG、WebP、GIF 的像素尺寸。图片带上宽高，懒加载时页面不会跳。"""
+    data = path.read_bytes()
+    if data[:8] == b'\x89PNG\r\n\x1a\n':
+        return struct.unpack('>II', data[16:24])
+    if data[:6] in (b'GIF87a', b'GIF89a'):
+        return struct.unpack('<HH', data[6:10])
+    if data[:4] == b'RIFF' and data[8:12] == b'WEBP':
+        kind = data[12:16]
+        if kind == b'VP8 ':
+            width, height = struct.unpack('<HH', data[26:30])
+            return width & 0x3fff, height & 0x3fff
+        if kind == b'VP8L':
+            b = data[21:25]
+            return 1+(b[0] | (b[1] & 0x3f) << 8), 1+((b[1] >> 6) | b[2] << 2 | (b[3] & 0x0f) << 10)
+        if kind == b'VP8X':
+            return 1+int.from_bytes(data[24:27], 'little'), 1+int.from_bytes(data[27:30], 'little')
+    if data[:2] == b'\xff\xd8':
+        i = 2
+        while i+9 < len(data):
+            if data[i] != 0xff:
+                i += 1
+                continue
+            marker = data[i+1]
+            if marker in (0xd8, 0x01, 0xff) or 0xd0 <= marker <= 0xd7:
+                i += 1 if marker == 0xff else 2
+                continue
+            if marker in (0xc0, 0xc1, 0xc2, 0xc3, 0xc5, 0xc6, 0xc7, 0xc9, 0xca, 0xcb, 0xcd, 0xce, 0xcf):
+                height, width = struct.unpack('>HH', data[i+5:i+9])
+                return width, height
+            i += 2+struct.unpack('>H', data[i+2:i+4])[0]
+    return None
+
+
+def local_asset(url):
+    """站内图片地址对应的仓库文件；不在 assets/ 里的地址返回 None。"""
+    if not url.startswith(BASE+'assets/'):
+        return None
+    path = (ASSETS/unquote(url[len(BASE+'assets/'):].split('?')[0].split('#')[0])).resolve()
+    return path if path.is_relative_to(ASSETS.resolve()) and path.is_file() else None
+
+
+def clean_tokens(tokens, used_ids):
+    for token in tokens:
+        if token.type in ('html_block', 'html_inline'):
+            token.content = sanitize_html(token.content, used_ids)
+        for attr in ('href', 'src'):
+            value = token.attrGet(attr)
+            if value is None:
+                continue
+            value = safe_url(convert_link(value))
+            if value is None:
+                token.attrs.pop(attr, None)
+            else:
+                token.attrSet(attr, value)
+        if token.type == 'image':
+            token.attrSet('loading', 'lazy')
+            token.attrSet('decoding', 'async')
+            path = local_asset(token.attrGet('src') or '')
+            size = path and image_size(path)
+            if size:
+                token.attrSet('width', str(size[0]))
+                token.attrSet('height', str(size[1]))
+        if token.type in ('th_open', 'td_open'):
+            # 表格对齐原本是行内 style，会被 CSP 拦下，换成样式类。
+            align = re.search(r'text-align:(left|center|right)', token.attrGet('style') or '')
+            token.attrs.pop('style', None)
+            if align:
+                token.attrSet('class', f'align-{align[1]}')
+        if token.children:
+            clean_tokens(token.children, used_ids)
+
+
+ANCHOR_ONLY = re.compile(r'\s*(?:<div>\s*)?<a id="([^"]+)"></a>\s*(?:</div>\s*)?\Z')
+
+
+def move_anchors_into_headings(tokens):
+    """旧锚点原来是标题前的空段落。挪进标题里，跳转后标题正好停在顶部，也不多出空行。"""
+    for i, token in enumerate(tokens):
+        anchor, after = None, i+1
+        if token.type == 'html_block':
+            match = ANCHOR_ONLY.match(token.content)
+            anchor = match and match[1]
+        elif token.type == 'paragraph_open' and i+2 < len(tokens):
+            children = tokens[i+1].children or []
+            if all(c.type == 'html_inline' or not c.content.strip() for c in children):
+                match = ANCHOR_ONLY.match(''.join(c.content for c in children if c.type == 'html_inline'))
+                anchor, after = match and match[1], i+3
+        if not anchor or after >= len(tokens) or tokens[after].type != 'heading_open':
+            continue
+        if token.type == 'html_block':
+            token.content = ''
+        else:
+            token.hidden = tokens[i+2].hidden = True
+            tokens[i+1].children = []
+        span = Token('html_inline', '', 0)
+        span.content = f'<span class="anchor" id="{escape(anchor)}"></span>'
+        tokens[after+1].children.insert(0, span)
+
+
+def html_token(content, inline=False):
+    token = Token('html_inline' if inline else 'html_block', '', 0)
+    token.content = content
+    return token
+
+
+def only_child(tokens, i, kind):
+    if tokens[i].type != 'paragraph_open' or i+2 >= len(tokens):
+        return None
+    children = [c for c in tokens[i+1].children or [] if c.type not in ('text', 'softbreak') or c.content.strip()]
+    if kind == 'image':
+        return children[0] if len(children) == 1 and children[0].type == 'image' else None
+    opens = [c for c in children if c.type == 'em_open']
+    return children if children and children[0].type == 'em_open' and children[-1].type == 'em_close' and len(opens) == 1 else None
+
+
+CALLOUTS = {'NOTE': '说明', 'TIP': '提示', 'IMPORTANT': '重要', 'WARNING': '注意', 'CAUTION': '警告'}
+
+
+def decorate(tokens):
+    """统一图片、提示框和表格的结构；样式只在 site.css 里定义一次。"""
+    result, i = [], 0
+    while i < len(tokens):
+        token = tokens[i]
+        image = only_child(tokens, i, 'image')
+        if image:
+            # 图片和紧跟着的斜体说明合成一个 figure，图片外包一层原图链接，没有脚本也能点开看。
+            src = image.attrGet('src') or ''
+            inline = tokens[i+1]
+            inline.children = [html_token(f'<a class="figure-link" href="{escape(src)}">', True), image,
+                               html_token(f'<span class="figure-zoom" aria-hidden="true">{icon("expand")}</span>'
+                                          '<span class="visually-hidden">（点击放大）</span></a>', True)]
+            result += [html_token('<figure class="figure">'), inline]
+            i += 3
+            caption = i < len(tokens) and only_child(tokens, i, 'caption')
+            if caption:
+                caption[0].hidden = caption[-1].hidden = True
+                result += [html_token('<figcaption>'), tokens[i+1], html_token('</figcaption>')]
+                i += 3
+            result.append(html_token('</figure>\n'))
+            continue
+        if token.type == 'blockquote_open' and i+2 < len(tokens) and tokens[i+2].type == 'inline':
+            children = tokens[i+2].children or []
+            match = re.match(r'\[!(\w+)\]\s*', children[0].content) if children and children[0].type == 'text' else None
+            if match and match[1].upper() in CALLOUTS:
+                kind = match[1].upper()
+                # 兼容 GitHub 的提示框写法：> [!TIP]。GitHub 预览和网站显示一致。
+                children[0].content = children[0].content[match.end():]
+                if not children[0].content and len(children) > 1 and children[1].type == 'softbreak':
+                    del children[:2]
+                token.attrSet('class', f'callout callout-{kind.lower()}')
+                result += [token, html_token(f'<p class="callout-title">{CALLOUTS[kind]}</p>\n')]
+                i += 1
+                continue
+        if token.type == 'table_open':
+            # 两列表格在手机上改成上下排列，命令和解释不用横向来回滑。
+            columns = 0
+            for cell in tokens[i+1:]:
+                columns += cell.type in ('th_open', 'td_open')
+                if cell.type == 'tr_close':
+                    break
+            result.append(html_token(f'<div class="table-wrap{" is-pair" if columns == 2 else ""}">'))
+        result.append(token)
+        if token.type == 'table_close':
+            result.append(html_token('</div>\n'))
+        i += 1
+    return result
+
+
+LANGUAGES = {
+    'bash': 'Bash', 'sh': 'Shell', 'shell': 'Shell', 'powershell': 'PowerShell', 'ps1': 'PowerShell',
+    'cmd': 'CMD', 'bat': 'Batch', 'java': 'Java', 'json': 'JSON', 'markdown': 'Markdown', 'md': 'Markdown',
+    'gitignore': '.gitignore', 'text': '文本', 'txt': '文本', 'python': 'Python', 'py': 'Python',
+    'javascript': 'JavaScript', 'js': 'JavaScript', 'html': 'HTML', 'css': 'CSS', 'yaml': 'YAML',
+    'yml': 'YAML', 'toml': 'TOML', 'xml': 'XML', 'gradle': 'Gradle', 'kotlin': 'Kotlin',
+}
+
+
+def render_code(self, tokens, idx, options, env):
+    # 代码块统一带标题栏：左边语言，右边留给复制按钮。按钮不放进 <pre>，复制内容不会混进按钮文字。
+    token = tokens[idx]
+    lang = token.info.strip().split(maxsplit=1)[0] if token.info.strip() else ''
+    label = LANGUAGES.get(lang.lower(), lang or '代码')
+    css = f' class="language-{escape(lang.lower())}"' if re.fullmatch(r'[\w+#.-]{1,30}', lang) else ''
+    return (f'<div class="code-block"><div class="code-head"><span class="code-lang">{escape(label)}</span></div>'
+            f'<pre><code{css}>{escape(token.content)}</code></pre></div>\n')
+
+
+MD.add_render_rule('fence', render_code)
+MD.add_render_rule('code_block', render_code)
+
+
 def render(raw):
-    # 原论坛自定义的 name 锚点保留下来，避免旧的章节直达失效。
-    raw = re.sub(r'<a\s+name="([^"]+)"\s*>\s*</a>', r'<a id="\1"></a>', raw)
+    """返回 (正文 HTML, 二三级标题目录)。"""
     tokens = MD.parse(raw)
+    used = set()
+    clean_tokens(tokens, used)
+    move_anchors_into_headings(tokens)
     toc = []
-    used = set(re.findall(r'<a id="([^"]+)"', raw))
-
-    def visit(items):
-        for token in items:
-            for attr in ('href', 'src'):
-                if token.attrGet(attr):
-                    token.attrSet(attr, convert_link(token.attrGet(attr)))
-            if token.type == 'image':
-                token.attrSet('loading', 'lazy')
-                token.attrSet('decoding', 'async')
-            if token.children:
-                visit(token.children)
-
-    visit(tokens)
     for index, token in enumerate(tokens):
         if token.type != 'heading_open':
             continue
@@ -84,82 +404,504 @@ def render(raw):
         token.attrSet('id', slug)
         if token.tag in ('h2', 'h3'):
             toc.append((token.tag, slug, re.sub(r'[`*]', '', label)))
-    return MD.renderer.render(tokens, MD.options, {}), toc
+    return MD.renderer.render(decorate(tokens), MD.options, {}), toc
 
 
-def shell(title, description, body, relative='', article=None, noindex=False):
+RECIPE_SECTIONS = {'用料': 'ingredients', '食材': 'ingredients', '材料': 'ingredients', '配料': 'ingredients',
+                   '做法': 'steps', '步骤': 'steps'}
+
+
+def recipe_parts(raw):
+    """食谱：取出“用料”“做法”两节（二级标题）下列表的每一项，写进结构化数据。"""
+    parts, section, depth, item = {'ingredients': [], 'steps': []}, None, 0, None
+    tokens = MD.parse(raw)
+    for i, token in enumerate(tokens):
+        if token.type == 'heading_open' and token.tag == 'h2':
+            section = RECIPE_SECTIONS.get(tokens[i+1].content.strip())
+        elif token.type in ('bullet_list_open', 'ordered_list_open'):
+            depth += 1
+        elif token.type in ('bullet_list_close', 'ordered_list_close'):
+            depth -= 1
+        elif section and depth == 1 and token.type == 'list_item_open':
+            item = []
+        elif section and depth == 1 and token.type == 'list_item_close' and item is not None:
+            text = re.sub(r'\s+', ' ', ' '.join(item)).strip()
+            if text:
+                parts[section].append(text)
+            item = None
+        elif item is not None and depth == 1 and token.type == 'inline':
+            item.append(''.join(c.content if c.type in ('text', 'code_inline') else ' ' if c.type == 'softbreak' else ''
+                                for c in token.children or []))
+    return parts
+
+
+def structured_data(meta, canonical):
+    kind = TYPES[meta.get('type', 'tutorial')][1]
+    data = {
+        '@context': 'https://schema.org', '@type': kind,
+        'headline': meta['title'], 'description': meta['summary'],
+        'datePublished': meta['created'], 'dateModified': meta['updated'],
+        'author': {'@type': 'Person', 'name': 'Milo Guo', 'url': 'https://github.com/Milo-Guo'},
+        'mainEntityOfPage': canonical,
+    }
+    if meta.get('image'):
+        data['image'] = [meta['image']]
+    if kind == 'Recipe':
+        recipe, parts = meta.get('recipe') or {}, meta.get('recipe_parts') or {}
+        data.update({'name': meta['title'], 'recipeCategory': meta['category']})
+        if recipe.get('servings'):
+            data['recipeYield'] = recipe['servings']
+        if recipe.get('minutes'):
+            data['totalTime'] = f'PT{recipe["minutes"]}M'
+        if parts.get('ingredients'):
+            data['recipeIngredient'] = parts['ingredients']
+        if parts.get('steps'):
+            data['recipeInstructions'] = [{'@type': 'HowToStep', 'text': step} for step in parts['steps']]
+    return data
+
+
+HEADING = re.compile(r'<(h[23]) id="([^"]+)">(.*?)</\1>', re.S)
+
+
+def sections(html):
+    """按二三级标题切开正文，搜索结果可以直接跳到命中的章节。"""
+    result, start, current = [], 0, ('', '')
+    for match in HEADING.finditer(html):
+        text = plain(html[start:match.start()])
+        if text or current[0]:
+            result.append([current[0], current[1], text])
+        current, start = (match[2], plain(match[3])), match.end()
+    text = plain(html[start:])
+    if text or current[0]:
+        result.append([current[0], current[1], text])
+    return result
+
+
+# ---------- 文章元数据 ----------
+
+SLUG = re.compile(r'[a-z0-9]+(?:-[a-z0-9]+)*\Z')
+REQUIRED = ('slug', 'title', 'category', 'summary', 'created', 'updated')
+# 分类管首页筛选（编程、做菜……），类型管文章体裁：决定结构化数据的写法和页头显示的信息。
+TYPES = {'tutorial': ('教程', 'TechArticle'), 'recipe': ('食谱', 'Recipe'), 'post': ('随笔', 'BlogPosting')}
+TYPE_HINT = '、'.join(f'{key}（{label}）' for key, (label, _) in TYPES.items())
+
+
+def iso_date(value, where):
+    try:
+        if len(value) == 10 and date.fromisoformat(value):
+            return value
+    except (TypeError, ValueError):
+        pass
+    raise BuildError(f'articles.json：{where} 的日期要写成 2026-10-22 这样的格式')
+
+
+def validate_articles(data, content_dir=CONTENT):
+    """检查 articles.json。slug 只能是小写字母、数字和连字符，对应的 Markdown 必须在 content/ 里。"""
+    if not isinstance(data, list) or not data:
+        raise BuildError('articles.json：应该是一个非空数组')
+    seen, articles = set(), []
+    root = content_dir.resolve()
+    for number, meta in enumerate(data, 1):
+        where = f'第 {number} 项'
+        if not isinstance(meta, dict):
+            raise BuildError(f'articles.json：{where} 不是对象')
+        for key in REQUIRED:
+            if not isinstance(meta.get(key), str) or not meta[key].strip():
+                raise BuildError(f'articles.json：{where} 缺少 {key}')
+        slug = meta['slug']
+        if not SLUG.match(slug) or len(slug) > 80:
+            raise BuildError(f'articles.json：{where} 的 slug「{slug}」只能用小写字母、数字和连字符')
+        if slug in seen:
+            raise BuildError(f'articles.json：slug「{slug}」重复')
+        if meta['category'].strip() == ALL:
+            raise BuildError(f'articles.json：{where} 的分类不能叫「{ALL}」')
+        path = (content_dir/f'{slug}.md').resolve()
+        if path.parent != root or not path.is_file():
+            raise BuildError(f'articles.json：找不到 content/{slug}.md')
+        iso_date(meta['created'], where)
+        iso_date(meta['updated'], where)
+        if meta['updated'] < meta['created']:
+            raise BuildError(f'articles.json：{where} 的更新日期早于发布日期')
+        note = meta.get('note')
+        if note is not None:
+            if not isinstance(note, dict) or not all(isinstance(note.get(k), str) and note[k].strip() for k in ('date', 'text', 'anchor')):
+                raise BuildError(f'articles.json：{where} 的 note 需要 date、text、anchor 三项')
+            iso_date(note['date'], where+' note')
+            if not SAFE_ID.match(note['anchor']):
+                raise BuildError(f'articles.json：{where} 的 note.anchor 只能是章节锚点名')
+        if meta.get('type') not in TYPES:
+            raise BuildError(f'articles.json：{where} 的 type 要写成 {TYPE_HINT} 之一')
+        if not isinstance(meta.get('draft', False), bool):
+            raise BuildError(f'articles.json：{where} 的 draft 只能是 true 或 false')
+        recipe = meta.get('recipe')
+        if recipe is not None:
+            minutes = recipe.get('minutes', 1) if isinstance(recipe, dict) else None
+            if (meta['type'] != 'recipe' or not isinstance(recipe, dict) or set(recipe) - {'servings', 'minutes'}
+                    or not isinstance(recipe.get('servings', '份量'), str) or not recipe.get('servings', '份量').strip()
+                    or not isinstance(minutes, int) or isinstance(minutes, bool) or not 0 < minutes <= 10000):
+                raise BuildError(f'articles.json：{where} 的 recipe 只用于食谱，写成 {{"servings": "2 人份", "minutes": 30}}')
+        seen.add(slug)
+        articles.append({**meta, 'path': path})
+    return articles
+
+
+# ---------- 页面模板 ----------
+
+ICONS = {
+    'search': '<circle cx="11" cy="11" r="6.5"/><path d="m16 16 4.5 4.5"/>',
+    'sun': '<circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M4.6 4.6 6 6M18 18l1.4 1.4M2.5 12h2M19.5 12h2M4.6 19.4 6 18M18 6l1.4-1.4"/>',
+    'moon': '<path d="M19.5 14.6A7.5 7.5 0 0 1 9.4 4.5a7.5 7.5 0 1 0 10.1 10.1Z"/>',
+    'arrow-right': '<path d="M5 12h14M13 6l6 6-6 6"/>',
+    'arrow-left': '<path d="M19 12H5M11 6l-6 6 6 6"/>',
+    'external': '<path d="M8 16 16 8M9.5 8H16v6.5"/>',
+    'chevron': '<path d="m7 10 5 5 5-5"/>',
+    'copy': '<rect x="8.5" y="8.5" width="11" height="11" rx="2"/><path d="M15.5 8.5V6A1.5 1.5 0 0 0 14 4.5H6A1.5 1.5 0 0 0 4.5 6v8A1.5 1.5 0 0 0 6 15.5h2.5"/>',
+    'check': '<path d="m5 12.5 4.5 4.5L19 7.5"/>',
+    'list': '<path d="M4 6.5h16M4 12h16M4 17.5h10"/>',
+    'close': '<path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/>',
+    'expand': '<path d="M14 4.5h5.5V10M10 19.5H4.5V14M19.5 4.5 14 10M4.5 19.5 10 14"/>',
+}
+SPRITE = ('<svg xmlns="http://www.w3.org/2000/svg" class="sprite" aria-hidden="true">'
+          + ''.join(f'<symbol id="i-{name}" viewBox="0 0 24 24">{path}</symbol>' for name, path in ICONS.items())+'</svg>')
+
+
+def icon(name):
+    return f'<svg class="icon icon-{name}" aria-hidden="true" focusable="false"><use href="#i-{name}"></use></svg>'
+
+
+def shell(title, description, body, relative='', article=None, noindex=False, page='page', search_link=True,
+          csp=CSP, styles=(), scripts=()):
     canonical = ORIGIN+BASE+relative
     structured = ''
     if article:
-        structured = '<script type="application/ld+json">'+json.dumps({
-            '@context': 'https://schema.org', '@type': 'TechArticle',
-            'headline': article['title'], 'description': article['summary'],
-            'datePublished': article['created'], 'dateModified': article['updated'],
-            'author': {'@type': 'Person', 'name': 'Milo Guo', 'url': 'https://github.com/Milo-Guo'},
-            'mainEntityOfPage': canonical,
-        }, ensure_ascii=False).replace('</', '<\/')+'</script>'
+        # JSON 里的 < 写成 \u003c，标题里出现 </script> 也不会提前结束这段数据。
+        structured = ('<script type="application/ld+json">'
+                      + json.dumps(structured_data(article, canonical), ensure_ascii=False).replace('<', '\\u003c')+'</script>')
+    nav = f'<a class="nav-link" href="{BASE}#search">{icon("search")}<span>搜索</span></a>' if search_link else ''
     return f'''<!doctype html>
 <html lang="zh-CN">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="{escape(csp)}">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script>{THEME_SCRIPT}</script>
 <title>{escape(title)} · ByteLife</title>
-<meta name="description" content="{escape(description, quote=True)}">
-<meta name="theme-color" content="#173ad8">
-<meta name="color-scheme" content="light dark">
+<meta name="description" content="{escape(description)}">
 {'<meta name="robots" content="noindex,follow">' if noindex else ''}
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="{THEME_COLORS['light']}" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="{THEME_COLORS['dark']}" media="(prefers-color-scheme: dark)">
 <link rel="canonical" href="{canonical}">
 <meta property="og:type" content="{'article' if article else 'website'}">
-<meta property="og:title" content="{escape(title, quote=True)}">
-<meta property="og:description" content="{escape(description, quote=True)}">
+<meta property="og:site_name" content="ByteLife">
+<meta property="og:title" content="{escape(title)}">
+<meta property="og:description" content="{escape(description)}">
 <meta property="og:url" content="{canonical}">
 <link rel="icon" href="{BASE}assets/favicon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="{BASE}assets/site.css">
+<link rel="stylesheet" href="{ASSET_URLS['site.css']}">
+{''.join(f'<link rel="stylesheet" href="{ASSET_URLS[name]}">' for name in styles)}
 <link rel="alternate" type="application/rss+xml" title="ByteLife 更新" href="{BASE}feed.xml">
 {structured}
-<script src="{BASE}assets/site.js" defer></script>
+<script src="{ASSET_URLS['site.js']}" defer></script>
+{''.join(f'<script src="{ASSET_URLS[name]}" defer></script>' for name in scripts)}
 </head>
-<body data-base="{BASE}">
-<a class="skip" href="#main">跳到正文</a>
+<body class="{page}" data-base="{BASE}">
+{SPRITE}
+<a class="skip-link" href="#main">跳到正文</a>
 <header class="site-header"><div class="header-inner">
-<a class="brand" href="{BASE}" aria-label="ByteLife 首页"><span class="brand-icon" aria-hidden="true">b/</span>ByteLife<span class="brand-dot" aria-hidden="true">.</span></a>
-<nav aria-label="主导航"><a href="{BASE}#library">文章</a><a href="{REPO}/discussions">交流</a><a href="{REPO}">GitHub <span aria-hidden="true">↗</span></a><button class="theme-toggle" type="button" aria-label="切换明暗主题">◐</button></nav>
+<a class="brand" href="{BASE}"><span class="brand-mark" aria-hidden="true">b/</span><span>ByteLife</span></a>
+<nav class="site-nav" aria-label="主导航">{nav}<a class="nav-link" href="{REPO}/discussions">交流</a><button class="icon-button theme-toggle" type="button" aria-pressed="false" aria-label="深色模式" title="切换明暗主题">{icon('moon')}{icon('sun')}</button></nav>
 </div></header>
 {body}
-<footer class="site-footer"><a class="footer-brand" href="{BASE}">ByteLife.</a><p>学习经验、折腾记录，还有生活里的兴趣。</p><div><a href="{BASE}feed.xml">RSS</a><a href="{REPO}">文章源码</a><a href="{BASE}migration/">迁移记录</a><span>© 2026 Milo Guo</span></div></footer>
+<footer class="site-footer"><div class="footer-inner">
+<p>ByteLife · Milo Guo 的学习与生活记录</p>
+<nav class="footer-links" aria-label="站点信息"><a href="{BASE}feed.xml">RSS</a><a href="{REPO}">源码</a><a href="{BASE}migration/">迁移记录</a></nav>
+<p class="footer-meta"><span>© 2026 Milo Guo</span><button class="text-button theme-reset" type="button" hidden>恢复跟随系统主题</button></p>
+</div></footer>
 </body></html>'''
 
 
 def toc_html(toc):
-    return '<ol>'+''.join(f'<li class="toc-{level}"><a href="#{quote(anchor)}">{escape(label)}</a></li>' for level, anchor, label in toc)+'</ol>'
+    html, group_open, sub_open = ['<ol class="toc-list">'], False, False
+    for level, anchor, label in toc:
+        link = f'<a href="#{quote(anchor)}">{escape(label)}</a>'
+        if level == 'h2' or not group_open:
+            if sub_open:
+                html.append('</ol>')
+                sub_open = False
+            if group_open:
+                html.append('</li>')
+            group_open = True
+            if level == 'h2':
+                html.append(f'<li class="toc-h2">{link}')
+                continue
+            html.append('<li class="toc-h2 toc-loose">')
+        if not sub_open:
+            html.append('<ol>')
+            sub_open = True
+        html.append(f'<li class="toc-h3">{link}</li>')
+    html.append(('</ol>' if sub_open else '')+('</li>' if group_open else '')+'</ol>')
+    return ''.join(html)
 
 
-def article_page(meta, html, toc, archive=False):
+def recipe_facts(meta):
+    """食谱的份量和用时，显示在页头和首页列表里。"""
+    recipe = (meta.get('recipe') or {}) if meta.get('type') == 'recipe' else {}
+    facts = []
+    if recipe.get('servings'):
+        facts.append(escape(recipe['servings']))
+    if recipe.get('minutes'):
+        facts.append(f'约 {recipe["minutes"]} 分钟')
+    return facts
+
+
+DRAFT_BADGE = '<span class="badge badge-draft">草稿 · 未发布</span>'
+
+
+def revisions(relative):
+    """文件的修改记录：从 Git 历史取每次提交的日期、说明和提交号。没有 Git 或只有浅克隆时返回空列表。"""
+    def git(*args):
+        return subprocess.run(['git', *args], cwd=ROOT, capture_output=True, text=True, encoding='utf-8',
+                              check=True, timeout=60).stdout
+    try:
+        if git('rev-parse', '--is-shallow-repository').strip() != 'false':
+            return []
+        log = git('log', '--follow', '--format=%H%x1f%ad%x1f%s', '--date=short', '--', relative)
+    except (OSError, subprocess.SubprocessError):
+        return []
+    result = []
+    for line in log.splitlines():
+        sha, day, message = (line.split('') + ['', '', ''])[:3]
+        if re.fullmatch(r'[0-9a-f]{40}', sha) and re.fullmatch(r'\d{4}-\d{2}-\d{2}', day):
+            result.append({'sha': sha, 'date': day, 'message': message})
+    return result
+
+
+def revisions_html(src, revs):
+    if not revs:
+        return ''
+    # GitHub 提交页里每个文件的锚点是 diff- 加文件路径的 SHA-256，点“看改动”直接跳到这篇的差异。
+    anchor = 'diff-'+sha256(src.encode()).hexdigest()
+    rows = ''.join(f'<li><time datetime="{r["date"]}">{r["date"]}</time><span class="rev-message">{escape(r["message"])}</span>'
+                   f'<span class="rev-links"><a href="{REPO}/commit/{r["sha"]}#{anchor}">看改动</a>'
+                   f'<a href="{REPO}/blob/{r["sha"]}/{src}">当时的版本</a></span></li>' for r in revs)
+    return (f'<details class="revisions" id="revisions"><summary>修改记录 · {len(revs)} 次</summary><ol>{rows}</ol>'
+            f'<p><a class="text-link" href="{REPO}/commits/main/{src}">在 GitHub 查看完整历史</a></p></details>')
+
+
+def article_page(meta, html, toc, archive=None, revs=()):
     slug = meta['slug']
     src = ('archive/' if archive else 'content/')+slug+'.md'
-    note = '<span class="label orange">历史存档</span>' if archive else f'<span class="label">{escape(meta["category"])}</span>'
-    archived = f'<p class="archive-link">迁移前的 PCL 图文：<a href="{BASE}archive/minecraft-pcl-2026-10-05/">查看 2026-10-05 原文存档</a></p>' if slug == 'minecraft-mod' else ''
-    return f'''<div class="reading-progress" aria-hidden="true"></div>
-<div class="article-layout">
-<aside class="toc-rail"><a class="back-link" href="{BASE}#library">← 全部文章</a><details class="toc" open><summary>这篇写了什么 <span>↕</span></summary><nav aria-label="章节目录">{toc_html(toc)}</nav></details><a class="rail-edit" href="{REPO}/edit/main/{src}">编辑这篇文章 ↗</a></aside>
-<main id="main" class="article-main"><header class="article-header">{note}<h1>{escape(meta['title'])}</h1><p class="article-summary">{escape(meta['summary'])}</p><div class="article-meta"><span>Milo Guo</span><span>发布 {meta['created']}</span><span>更新 {meta['updated']}</span></div></header>
-<article class="prose">{html}</article>{archived}
-<div class="article-end"><span class="end-mark">/</span><h2>有问题，就把卡住的地方说清楚。</h2><p>带上环境、操作步骤和报错，一起把文章补好。</p><a class="text-link" href="{REPO}/discussions">去 GitHub 交流 ↗</a><a class="text-link" href="{REPO}/blob/main/{src}">查看 Markdown 原文 ↗</a></div></main></div>'''
+    if archive:
+        kicker = '<span class="badge badge-archive">历史存档</span>'
+        notice = (f'<div class="archive-notice"><p>这是 {meta["created"]} 的旧版存档，在线下载和安装步骤已经变了。</p>'
+                  f'<a href="{public_url(archive)}">阅读当前修订版{icon("arrow-right")}</a></div>')
+    else:
+        kicker = f'<a class="badge" href="{BASE}?c={quote(meta["category"])}">{escape(meta["category"])}</a>'
+        kicker += DRAFT_BADGE if meta.get('draft') else ''
+        notice = ''
+    facts = ''.join(f'<span>{fact}</span>' for fact in recipe_facts(meta))
+    history = f'<a class="meta-link" href="#revisions">修改记录</a>' if revs else ''
+    edit = (f'<a class="text-link" href="{REPO}/edit/main/{src}">在 GitHub 编辑</a>' if archive
+            else f'<a class="text-link" href="{BASE}write/?a={slug}">编辑这篇</a>')
+    related = (f'<p class="related-archive">迁移前的 PCL 图文：<a href="{BASE}archive/minecraft-pcl-2026-10-05/">查看 2026-10-05 原文存档</a></p>'
+               if slug == 'minecraft-mod' else '')
+    return f'''<div class="reading-progress" aria-hidden="true"><span></span></div>
+<div class="article-shell">
+<nav class="toc-rail" id="toc" aria-label="文章目录">
+<a class="back-link" href="{BASE}">{icon('arrow-left')}全部文章</a>
+<p class="toc-title">目录</p>
+<div class="toc-scroll">{toc_html(toc)}</div>
+</nav>
+<main id="main" class="article-main">
+<header class="article-header">
+<div class="article-kicker">{kicker}</div>
+<h1>{escape(meta['title'])}</h1>
+<p class="article-summary">{escape(meta['summary'])}</p>
+<p class="article-meta"><span>Milo Guo</span><span>发布 <time datetime="{meta['created']}">{meta['created']}</time></span><span>更新 <time datetime="{meta['updated']}">{meta['updated']}</time></span>{facts}{history}</p>
+{notice}
+</header>
+<div class="reading-bar"><button class="toc-toggle" type="button" aria-expanded="false" aria-controls="toc">{icon('list')}<span class="reading-current">目录</span>{icon('chevron')}</button></div>
+<article class="prose">{html}</article>
+{related}
+<footer class="article-end">
+<h2>有问题，就把卡住的地方说清楚。</h2>
+<p>带上环境、操作步骤和报错，一起把文章补好。</p>
+<p class="end-actions"><a class="button button-primary" href="{REPO}/discussions">去 GitHub 交流{icon('external')}</a><a class="text-link" href="{REPO}/blob/main/{src}">Markdown 原文</a>{edit}</p>
+{revisions_html(src, revs)}
+<a class="back-link" href="{BASE}">{icon('arrow-left')}全部文章</a>
+</footer>
+</main>
+</div>'''
 
 
-def main():
-    OUT.mkdir(exist_ok=True)
-    shutil.copytree(ROOT/'assets', OUT/'assets', dirs_exist_ok=True)
-    articles = json.loads((ROOT/'articles.json').read_text(encoding='utf-8'))
-    articles.sort(key=lambda a: a['created'], reverse=True)
+def entry_html(meta):
+    url = public_url(meta['slug'])
+    note = ''
+    if meta.get('note'):
+        n = meta['note']
+        note = (f'<p class="entry-note"><a href="{url}#{quote(n["anchor"])}"><span class="note-tag">{escape(n["date"])} 更新</span>'
+                f'<span class="note-text">{escape(n["text"])}</span>{icon("arrow-right")}</a></p>')
+    facts = ''.join(f'<span>{fact}</span>' for fact in recipe_facts(meta))
+    return (f'<li class="entry" data-category="{escape(meta["category"])}">'
+            f'<p class="entry-meta"><span class="entry-cat">{escape(meta["category"])}</span>'
+            f'<span>更新 <time datetime="{meta["updated"]}">{meta["updated"]}</time></span>{facts}'
+            f'{DRAFT_BADGE if meta.get("draft") else ""}</p>'
+            f'<h3 class="entry-title"><a href="{url}">{escape(meta["title"])}</a></h3>'
+            f'<p class="entry-summary">{escape(meta["summary"])}</p>{note}</li>')
+
+
+def editor_page(catalog):
+    """写作页：页面本身是静态的，文章内容由浏览器向 GitHub 接口读取；这里只放文章列表、模板和渲染规则。"""
+    fields = ('slug', 'title', 'category', 'type', 'summary', 'created', 'updated', 'draft', 'recipe')
+    data = {
+        'repo': REPO.removeprefix('https://github.com/'), 'branch': 'main', 'base': BASE, 'all': ALL,
+        'types': {key: label for key, (label, _) in TYPES.items()}, 'languages': LANGUAGES, 'callouts': CALLOUTS,
+        'templates': {key: (ROOT/'scripts'/'templates'/f'{key}.md').read_text(encoding='utf-8') for key in TYPES},
+        'articles': [{key: meta[key] for key in fields if key in meta}
+                     for meta in sorted(catalog, key=lambda a: (a['created'], a['slug']), reverse=True)],
+    }
+    categories = ''.join(f'<option value="{escape(c)}"></option>' for c in dict.fromkeys(a['category'] for a in catalog))
+    types = ''.join(f'<option value="{key}">{label}</option>' for key, (label, _) in TYPES.items())
+    blob = json.dumps(data, ensure_ascii=False).replace('<', '\\u003c')
+    return f'''<main id="main" class="editor">
+<div class="ed-bar">
+<div class="ed-doc"><label class="visually-hidden" for="ed-article">选择文章</label><select id="ed-article" class="ed-select"></select><button class="button" type="button" id="ed-new">新建</button></div>
+<p id="ed-status" class="ed-status" role="status">正在准备……</p>
+<div class="ed-actions"><button class="button" type="button" id="ed-info" aria-expanded="false" aria-controls="ed-meta">文章信息</button><button class="button" type="button" id="ed-history">版本</button><button class="button button-primary" type="button" id="ed-commit">提交</button></div>
+</div>
+<section id="ed-meta" class="ed-meta" aria-label="文章信息" hidden>
+<label>标题<input id="m-title"></label>
+<label>分类<input id="m-category" list="ed-categories"></label><datalist id="ed-categories">{categories}</datalist>
+<label>类型<select id="m-type">{types}</select></label>
+<label>更新日期<input id="m-updated" type="date"></label>
+<label class="check"><input id="m-draft" type="checkbox">草稿（不发布）</label>
+<label class="recipe-only">份量<input id="m-servings" placeholder="2 人份"></label>
+<label class="recipe-only">用时（分钟）<input id="m-minutes" type="number" min="1" max="10000" inputmode="numeric"></label>
+<label class="wide">摘要<textarea id="m-summary" rows="2"></textarea></label>
+</section>
+<div class="ed-tabs" role="tablist" aria-label="切换源代码和预览"><button type="button" role="tab" data-view="source" aria-selected="true" aria-controls="ed-source">源代码</button><button type="button" role="tab" data-view="preview" aria-selected="false" aria-controls="ed-preview">预览</button></div>
+<div class="ed-panes" id="ed-panes" data-view="source">
+<div class="ed-source" id="ed-source"><label class="visually-hidden" for="ed-text">Markdown 源代码</label><textarea id="ed-text" spellcheck="false" autocapitalize="off" disabled></textarea><div class="ed-mirror" id="ed-mirror" aria-hidden="true"></div></div>
+<div class="ed-preview" id="ed-preview" tabindex="0" role="region" aria-label="预览"><div class="ed-preview-inner"><header class="article-header" id="ed-head"></header><article class="prose" id="ed-body"></article></div></div>
+</div>
+<noscript><p class="ed-noscript">写作页需要启用 JavaScript。也可以直接在 GitHub 网页上编辑 content/ 里的文章。</p></noscript>
+</main>
+<script type="application/json" id="editor-data">{blob}</script>'''
+
+
+def home_page(articles, index_url):
+    categories = list(dict.fromkeys(a['category'] for a in articles))
+    counts = [(ALL, len(articles))]+[(c, sum(a['category'] == c for a in articles)) for c in categories]
+    chips = ''.join(
+        f'<button class="chip{" is-active" if name == ALL else ""}" type="button" data-category="{escape(name)}" '
+        f'aria-pressed="{"true" if name == ALL else "false"}">{escape(name)}<span class="chip-count" data-total="{count}">{count}</span></button>'
+        for name, count in counts)
+    latest = max(a['updated'] for a in articles)
+    return f'''<main id="main" class="home-main">
+<section class="intro" aria-labelledby="intro-title">
+<h1 id="intro-title">Milo 的笔记</h1>
+<p>记录我学编程、修电脑时遇到的问题和解决过程，以后也写做菜和生活。</p>
+<p class="intro-meta">{len(articles)} 篇文章 · 最近更新 <time datetime="{latest}">{latest}</time></p>
+</section>
+<section id="library" class="library" aria-labelledby="library-title">
+<h2 id="library-title" class="visually-hidden">全部文章</h2>
+<div class="search" id="search" role="search">
+<label class="visually-hidden" for="search-input">搜索全文</label>{icon('search')}
+<input id="search-input" type="search" placeholder="搜索标题、正文、命令或报错" autocomplete="off" spellcheck="false" enterkeyhint="search" aria-controls="article-list">
+<button class="icon-button search-clear" type="button" aria-label="清空搜索" hidden>{icon('close')}</button>
+<kbd class="search-key" aria-hidden="true">/</kbd>
+</div>
+<div class="chips" role="group" aria-label="按分类筛选">{chips}</div>
+<p id="search-status" class="search-status" role="status"></p>
+<div id="search-notice" class="search-notice" hidden></div>
+<ol id="article-list" class="entries" data-index="{index_url}">{''.join(entry_html(a) for a in articles)}</ol>
+</section>
+</main>'''
+
+
+# ---------- 输出 ----------
+
+PUBLIC_ASSET_SUFFIXES = {'.css', '.js', '.svg', '.png', '.jpg', '.jpeg', '.webp', '.gif', '.avif', '.ico'}
+PUBLIC_ASSET_FILES = {'IMAGE-SOURCES.md', 'vendor/markdown-it-LICENSE.txt'}
+
+
+def is_public_asset(relative):
+    """assets/ 里只发布网页用得到的文件，隐藏文件、草稿和其他格式一律不发。"""
+    if any(part.startswith('.') for part in relative.parts):
+        return False
+    return relative.suffix.lower() in PUBLIC_ASSET_SUFFIXES or relative.as_posix() in PUBLIC_ASSET_FILES
+
+
+def reset_output():
+    # 只清理仓库根目录下名为 _site 的真实目录，防止配置写错时删到别处。
+    if OUT.is_symlink() or OUT.parent.resolve() != ROOT.resolve() or OUT.name != '_site':
+        raise BuildError(f'输出目录异常，已停止：{OUT}')
+    if OUT.exists():
+        shutil.rmtree(OUT)
+    OUT.mkdir()
+
+
+def write(relative, text):
+    target = (OUT/relative).resolve()
+    if not target.is_relative_to(OUT.resolve()):
+        raise BuildError(f'拒绝写到 _site 之外：{relative}')
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text(text, encoding='utf-8')
+
+
+def copy_assets():
+    source = ASSETS.resolve()
+    skipped = []
+    for path in sorted(source.rglob('*')):
+        relative = path.relative_to(source)
+        if path.is_dir() and not path.is_symlink():
+            continue
+        if path.is_symlink() or not path.resolve().is_relative_to(source) or not is_public_asset(relative):
+            skipped.append(relative.as_posix())
+            continue
+        target = OUT/'assets'/relative
+        target.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(path, target)
+    for name, expected in VENDOR_HASHES.items():
+        if sha256((source/name).read_bytes()).hexdigest() != expected:
+            raise BuildError(f'assets/{name} 和记录的哈希不一致，可能被改动过；请从 npm 官方包重新取得')
+    for name in ('site.css', 'site.js', 'editor.css', 'editor.js', VENDOR_MARKDOWN_IT):
+        digest = sha256((source/name).read_bytes()).hexdigest()[:10]
+        ASSET_URLS[name] = f'{BASE}assets/{name}?v={digest}'
+    return skipped
+
+
+def main(argv=None):
+    for stream in (sys.stdout, sys.stderr):
+        if hasattr(stream, 'reconfigure'):
+            stream.reconfigure(encoding='utf-8', errors='replace')
+    parser = argparse.ArgumentParser(description='构建 ByteLife 静态网站。')
+    parser.add_argument('--drafts', action='store_true', help='连同草稿一起构建，只用于本地预览，不要拿这次结果发布')
+    options = parser.parse_args(argv)
+    articles = validate_articles(json.loads((ROOT/'articles.json').read_text(encoding='utf-8')))
+    drafts = [a['slug'] for a in articles if a.get('draft')]
+    if not options.drafts:
+        articles = [a for a in articles if not a.get('draft')]
+    if not articles:
+        raise BuildError('articles.json 里没有可发布的文章（全部是草稿？）')
+    articles.sort(key=lambda a: (a['created'], a['slug']), reverse=True)
+    published = [a for a in articles if not a.get('draft')]
+    reset_output()
+    skipped = copy_assets()
+
     search = []
     for meta in articles:
-        raw = (ROOT/'content'/f'{meta["slug"]}.md').read_text(encoding='utf-8')
+        raw = meta['path'].read_text(encoding='utf-8')
         html, toc = render(raw)
-        directory = OUT/'articles'/meta['slug']
-        directory.mkdir(parents=True, exist_ok=True)
-        body = article_page(meta, html, toc)
-        (directory/'index.html').write_text(shell(meta['title'], meta['summary'], body, f'articles/{meta["slug"]}/', meta), encoding='utf-8')
-        search.append({**meta, 'url': public_url(meta['slug']), 'text': plain(html)})
+        image = re.search(r'<img src="(/[^"]+)"', html)
+        meta.update(image=ORIGIN+image[1] if image else None, recipe_parts=recipe_parts(raw) if meta['type'] == 'recipe' else None)
+        body = article_page(meta, html, toc, revs=revisions(f'content/{meta["slug"]}.md'))
+        write(f'articles/{meta["slug"]}/index.html', shell(meta['title'], meta['summary'], body, f'articles/{meta["slug"]}/', meta,
+                                                           noindex=bool(meta.get('draft')), page='page article'))
+        search.append({key: meta[key] for key in ('title', 'category', 'summary', 'updated')}
+                      | {'url': public_url(meta['slug']), 'sections': sections(html)})
 
     archive_meta = {
         'slug': 'minecraft-pcl-2026-10-05', 'title': '从 PCL 玩明白，到用 VS Code 写出第一个 Minecraft Java 模组（原文存档）',
@@ -167,39 +909,54 @@ def main():
         'category': '历史存档', 'created': '2026-10-05', 'updated': '2026-10-22',
     }
     html, toc = render((ROOT/'archive'/f'{archive_meta["slug"]}.md').read_text(encoding='utf-8'))
-    directory = OUT/'archive'/archive_meta['slug']
-    directory.mkdir(parents=True, exist_ok=True)
-    (directory/'index.html').write_text(shell(archive_meta['title'], archive_meta['summary'], article_page(archive_meta, html, toc, True), f'archive/{archive_meta["slug"]}/', noindex=True), encoding='utf-8')
+    write(f'archive/{archive_meta["slug"]}/index.html',
+          shell(archive_meta['title'], archive_meta['summary'], article_page(archive_meta, html, toc, archive='minecraft-mod', revs=revisions(f'archive/{archive_meta["slug"]}.md')),
+                f'archive/{archive_meta["slug"]}/', noindex=True, page='page article'))
 
-    rows = []
-    for i, meta in enumerate(articles, 1):
-        rows.append(f'''<li class="article-row" data-category="{escape(meta['category'])}"><span class="row-number">{i:02}</span><div class="row-content"><div class="row-meta"><span>{escape(meta['category'])}</span><time datetime="{meta['created']}">{meta['created']}</time></div><h3><a href="{public_url(meta['slug'])}">{escape(meta['title'])}</a></h3><p>{escape(meta['summary'])}</p></div><a class="row-arrow" aria-label="阅读：{escape(meta['title'], quote=True)}" href="{public_url(meta['slug'])}">↗</a></li>''')
-    categories = list(dict.fromkeys(x['category'] for x in articles))
-    buttons = '<button class="filter active" data-filter="全部" aria-pressed="true">全部 <span>'+str(len(articles))+'</span></button>'
-    buttons += ''.join(f'<button class="filter" data-filter="{escape(cat)}" aria-pressed="false">{escape(cat)} <span>{sum(x["category"] == cat for x in articles)}</span></button>' for cat in categories)
-    home = f'''<main id="main" class="home-main"><section class="hero"><div class="hero-copy"><p class="eyebrow"><span></span> MILO’S LEARNING NOTES</p><h1>折腾过的，<br><em>写下来。</em></h1><p class="hero-description">技术怎么学，问题怎么查，日子怎么过。<br>把走过的路写清楚，让后来的人少绕一点。</p></div><div class="hero-margin"><span class="margin-line"></span><p>从一个命令，<br>到自己的作品。</p><span class="mono">{len(articles):02} 篇记录 / 持续补充</span></div></section>
-<a class="update-strip" href="{public_url('minecraft-mod')}#mc-section-09"><span class="update-tag">10.22 更新</span><span>PCL 下载变化之后，已有游戏、整合包和全新安装分别怎么办</span><span aria-hidden="true">→</span></a>
-<section id="library" class="library"><div class="library-heading"><div><p class="eyebrow">THE NOTEBOOK</p><h2>文章</h2></div><label class="search-box"><span aria-hidden="true">⌕</span><input id="search" type="search" placeholder="搜索文章、命令、报错…" aria-label="搜索全文" autocomplete="off"><kbd>/</kbd></label></div><div class="filter-bar" role="group" aria-label="按主题筛选">{buttons}</div><p id="result-status" class="result-status" aria-live="polite"></p><ol id="article-list" class="article-list">{''.join(rows)}</ol><p id="empty-state" class="empty-state" hidden>没有找到。试试换个词，或者切回“全部”。</p></section>
-<section class="about-note"><span class="note-symbol" aria-hidden="true">↳</span><div><h2>这里还会慢慢长大。</h2><p>先写学技术时真正卡住的地方。以后也写做菜、食谱和别的爱好。写过的内容会继续修订，原文和修改记录都留着。</p><a href="{REPO}/discussions">有想聊的，来交流 ↗</a></div></section></main>'''
-    (OUT/'index.html').write_text(shell('把走过的路写清楚', 'ByteLife：Milo Guo 的学习经验与生活记录。Git 入门、Minecraft Java 模组开发和 Windows 排障，步骤、文件位置和原因一起讲。', home), encoding='utf-8')
-    (OUT/'search-index.json').write_text(json.dumps(search, ensure_ascii=False), encoding='utf-8')
+    # 历史存档不进全文索引；索引地址带内容哈希，发布后读者不会拿到旧索引。
+    index = json.dumps(search, ensure_ascii=False, separators=(',', ':'))
+    index_url = f'{BASE}search-index.json?v={sha256(index.encode()).hexdigest()[:10]}'
+    write('search-index.json', index)
+    write('index.html', shell('Milo 的笔记', 'Milo Guo 的学习与生活笔记：Git 入门、Minecraft Java 模组开发、Windows 问题排查，步骤和原因一起写清楚。',
+                              home_page(articles, index_url), page='page home', search_link=False))
+    # 写作页列出全部文章（含草稿）：articles.json 本来就在公开仓库里。页面不让搜索引擎收录。
+    write('write/index.html', shell('写作', '在浏览器里编辑 ByteLife 文章：左边 Markdown，右边实时预览。',
+                                    editor_page(validate_articles(json.loads((ROOT/'articles.json').read_text(encoding='utf-8')))),
+                                    'write/', noindex=True, page='page editor-page', csp=EDITOR_CSP,
+                                    styles=('editor.css',), scripts=(VENDOR_MARKDOWN_IT, 'editor.js')))
 
-    migration = (ROOT/'MIGRATION.md').read_text(encoding='utf-8')
-    html, _ = render(migration)
-    (OUT/'migration').mkdir(exist_ok=True)
-    (OUT/'migration'/'index.html').write_text(shell('从论坛迁到这里', 'ByteLife 公开文章、配图和历史版本的迁移记录。', f'<main id="main" class="single-page"><a href="{BASE}" class="back-link">← 回到首页</a><article class="prose">{html}</article></main>', 'migration/'), encoding='utf-8')
-    (OUT/'404.html').write_text(shell('这一页没找到', '返回 ByteLife 文章目录。', f'<main id="main" class="single-page"><h1>这一页没找到。</h1><p>文章可能换过地址。<a href="{BASE}">回首页查找</a>。</p></main>', '404.html', noindex=True), encoding='utf-8')
-    latest = max(a['updated'] for a in articles)
-    links = [(ORIGIN+BASE, latest)] + [(ORIGIN+public_url(a['slug']), a['updated']) for a in articles]
-    sitemap = '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'+''.join(f'<url><loc>{url}</loc><lastmod>{updated}</lastmod></url>' for url, updated in links)+'</urlset>'
-    (OUT/'sitemap.xml').write_text(sitemap, encoding='utf-8')
-    (OUT/'robots.txt').write_text(f'User-agent: *\nAllow: /\nSitemap: {ORIGIN}{BASE}sitemap.xml\n', encoding='utf-8')
+    html, _ = render((ROOT/'MIGRATION.md').read_text(encoding='utf-8'))
+    write('migration/index.html', shell('从论坛迁到这里', 'ByteLife 公开文章、配图和历史版本的迁移记录。',
+                                        f'<main id="main" class="single"><a href="{BASE}" class="back-link">{icon("arrow-left")}回到首页</a><article class="prose">{html}</article></main>', 'migration/'))
+    write('404.html', shell('这一页没找到', '返回 ByteLife 文章目录。',
+                            f'<main id="main" class="single not-found"><h1>这一页没找到。</h1><p>文章可能换过地址。可以回首页搜索标题或正文里的关键词。</p>'
+                            f'<p><a class="button button-primary" href="{BASE}#search">{icon("search")}去首页搜索</a></p></main>', '404.html', noindex=True))
+
+    # 草稿不进站点地图和 RSS。
+    latest = max(a['updated'] for a in published or articles)
+    links = [(ORIGIN+BASE, latest)]+[(ORIGIN+public_url(a['slug']), a['updated']) for a in published]
+    write('sitemap.xml', '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
+          + ''.join(f'<url><loc>{url}</loc><lastmod>{updated}</lastmod></url>' for url, updated in links)+'</urlset>')
+    write('robots.txt', f'User-agent: *\nAllow: /\nSitemap: {ORIGIN}{BASE}sitemap.xml\n')
+    china = timezone(timedelta(hours=8))
     rss = '<?xml version="1.0" encoding="UTF-8"?><rss version="2.0"><channel><title>ByteLife</title><link>'+ORIGIN+BASE+'</link><description>Milo 的学习与生活记录</description>'
-    for a in articles:
+    for a in published:
         url = ORIGIN+public_url(a['slug'])
-        rss += '<item><title>'+xml_escape(a['title'])+'</title><link>'+url+'</link><guid>'+url+'</guid><description>'+xml_escape(a['summary'])+'</description></item>'
-    (OUT/'feed.xml').write_text(rss+'</channel></rss>', encoding='utf-8')
-    (OUT/'.nojekyll').touch()
+        pub_date = format_datetime(datetime.fromisoformat(a['created']).replace(tzinfo=china))
+        rss += ('<item><title>'+xml_escape(a['title'])+'</title><link>'+url+'</link><guid>'+url+'</guid><pubDate>'+pub_date
+                + '</pubDate><description>'+xml_escape(a['summary'])+'</description></item>')
+    write('feed.xml', rss+'</channel></rss>')
+    write('.nojekyll', '')
+
+    unlisted = sorted({p.stem for p in CONTENT.glob('*.md')}-{a['slug'] for a in validate_articles(json.loads((ROOT/'articles.json').read_text(encoding='utf-8')))})
+    if unlisted:
+        print('未列入 articles.json、本次不发布：'+'、'.join(unlisted))
+    if drafts and options.drafts:
+        print('已包含草稿，只供本地预览：'+'、'.join(drafts)+'。发布前请不加 --drafts 重新构建。')
+    elif drafts:
+        print('草稿未发布：'+'、'.join(drafts)+'（本地预览草稿用 python scripts/build.py --drafts）')
+    if skipped:
+        print('assets 中这些文件不是网页资源，未发布：'+'、'.join(skipped))
     print(f'构建完成：{len(articles)} 篇文章、1 篇历史存档、全文索引与站点地图 → {OUT}')
 
 
