@@ -1,0 +1,4 @@
+# 复现材料按 SHA-256 校验原始字节，避免跨平台换行转换改变内容。
+examples/colab-ai-spatial-2026/** -text
+# 该 PLY 是二进制点云；不生成文本差异或尝试文本合并。
+examples/colab-ai-spatial-2026/*.ply binary
