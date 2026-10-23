@@ -1,5 +1,14 @@
 [
   {
+    "slug": "github-project-deployment",
+    "title": "GitHub 项目从下载到部署：用 dsh-purge 学排错、更新、独立备份与公开／私有设置",
+    "category": "编程",
+    "type": "tutorial",
+    "summary": "从 GitHub 页面各按钮讲起，用一次真实的 Harness 插件部署与 {{cwd}} 修复，串起安装验证、版本更新、防删库备份、离线恢复和仓库公开／私有设置。",
+    "created": "2026-10-23",
+    "updated": "2026-10-23"
+  },
+  {
     "slug": "colab-ai-spatial-lab",
     "title": "从计算器到 AI 人物检测、3D 点云：Colab 实习完整代码解析与复现",
     "category": "编程",

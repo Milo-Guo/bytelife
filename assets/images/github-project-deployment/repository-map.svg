@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1120" height="740" viewBox="0 0 1120 740" role="img" aria-labelledby="title desc">
+<title id="title">GitHub 仓库页面地图</title>
+<desc id="desc">讲解用示意图。顶部是仓库名和功能标签，左侧是分支、Code 菜单、文件列表和 README，右侧是 About 与 Releases。下方说明下载、排错和权限设置入口。</desc>
+<rect width="1120" height="740" rx="20" fill="#f6f8fa"/>
+<g font-family="Segoe UI, Microsoft YaHei, sans-serif">
+<text x="38" y="46" font-size="26" font-weight="700" fill="#172b4d">看懂一个 GitHub 仓库</text>
+<text x="38" y="75" font-size="16" fill="#57606a">讲解用示意图 · 按钮位置以实际页面为准</text>
+<rect x="28" y="99" width="1064" height="493" rx="12" fill="#ffffff" stroke="#d0d7de" stroke-width="2"/>
+<text x="50" y="138" font-size="23" font-weight="600" fill="#0969da">账号名 / 仓库名</text>
+<rect x="284" y="116" width="76" height="29" rx="14" fill="#f6f8fa" stroke="#d0d7de"/>
+<text x="322" y="136" text-anchor="middle" font-size="14" fill="#57606a">Private</text>
+<text x="780" y="136" font-size="17" fill="#57606a">Watch　Star　Fork</text>
+<rect x="29" y="158" width="1062" height="54" fill="#f6f8fa"/>
+<text x="50" y="192" font-size="18" fill="#172b4d">Code　　Issues　　Pull requests　　Discussions　　Actions　　…</text>
+<rect x="926" y="167" width="141" height="35" rx="6" fill="#fff1f0" stroke="#f0b4ad"/>
+<text x="996" y="191" text-anchor="middle" font-size="18" font-weight="600" fill="#b42318">Settings ④</text>
+<text x="55" y="249" font-size="19" fill="#172b4d">master ▾</text>
+<text x="190" y="249" font-size="17" fill="#57606a">Branches　Tags</text>
+<rect x="610" y="221" width="150" height="40" rx="7" fill="#1f883d"/>
+<text x="685" y="248" text-anchor="middle" font-size="19" font-weight="600" fill="#ffffff">Code ▾ ①</text>
+<rect x="50" y="278" width="710" height="133" rx="7" fill="#ffffff" stroke="#d0d7de"/>
+<path d="M50 320H760M50 364H760" stroke="#d8dee4"/>
+<text x="70" y="305" font-size="17" fill="#57606a">最近提交说明　　　　　　　　　　　　Commits</text>
+<text x="70" y="348" font-size="18" fill="#0969da">docs/　　　　　　　　　　　　　项目文档</text>
+<text x="70" y="393" font-size="18" fill="#0969da">package.json　　　　　　　　　版本与脚本</text>
+<rect x="50" y="428" width="710" height="142" rx="7" fill="#f6f8fa" stroke="#d0d7de"/>
+<text x="70" y="462" font-size="23" font-weight="600" fill="#172b4d">README ②</text>
+<text x="70" y="498" font-size="18" fill="#57606a">项目是什么？需要什么环境？</text>
+<text x="70" y="533" font-size="18" fill="#57606a">Install 安装 · Usage 使用 · Troubleshooting 排错</text>
+<text x="801" y="249" font-size="23" font-weight="600" fill="#172b4d">About</text>
+<text x="801" y="282" font-size="17" fill="#57606a">简介、官网与主题</text>
+<path d="M800 307H1065" stroke="#d8dee4"/>
+<rect x="785" y="326" width="288" height="154" rx="9" fill="#eaf3ff" stroke="#8cbeff"/>
+<text x="801" y="362" font-size="23" font-weight="600" fill="#0969da">Releases ③</text>
+<text x="801" y="397" font-size="17" fill="#172b4d">版本说明与可下载附件</text>
+<text x="801" y="429" font-size="17" fill="#57606a">进入版本 → Assets</text>
+<text x="801" y="459" font-size="16" fill="#57606a">安装包与源码快照要分清</text>
+<text x="40" y="630" font-size="18" font-weight="600" fill="#172b4d">① Code：克隆地址／源码 ZIP　　② README：从这里读安装说明</text>
+<text x="40" y="669" font-size="18" font-weight="600" fill="#172b4d">③ Releases：找已发布安装包　　 ④ Settings：改仓库权限与公开／私有</text>
+<text x="40" y="710" font-size="17" fill="#57606a">遇到报错去 Issues；测试或网站自动发布失败去 Actions 看日志。</text>
+</g>
+</svg>
