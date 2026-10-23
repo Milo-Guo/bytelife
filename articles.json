@@ -1,5 +1,14 @@
 [
   {
+    "slug": "colab-ai-spatial-lab",
+    "title": "从计算器到 AI 人物检测、3D 点云：Colab 实习完整代码解析与复现",
+    "category": "编程",
+    "type": "tutorial",
+    "summary": "四个 Python 程序逐段讲解，串起 Colab、Streamlit、YOLO、ngrok 与 RANSAC。附源码、四份笔记本、视频和点云下载，以及当天报错的排查过程。",
+    "created": "2026-10-23",
+    "updated": "2026-10-23"
+  },
+  {
     "slug": "git-basics",
     "title": "Git 零基础完整教程：从安装到 GitHub，附核心命令速查表",
     "category": "编程",

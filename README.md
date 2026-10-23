@@ -8,6 +8,7 @@ Milo 的笔记：记录我学编程、修电脑时遇到的问题和解决过程
 
 ## 已有文章
 
+- [Colab 实习：计算器、AI 人物检测与 3D 点云完整解析，附复现文件](content/colab-ai-spatial-lab.md)
 - [Git 零基础完整教程，附核心命令速查](content/git-basics.md)
 - [我的世界 Java 版 Mod 入门](content/minecraft-mod.md)
 - [软件装好了却找不到：WindowsApps](content/windowsapps.md)

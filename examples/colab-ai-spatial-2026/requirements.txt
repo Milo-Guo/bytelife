@@ -1,0 +1,9 @@
+# Python 依赖；FFmpeg 是外部程序，不由 pip 安装
+streamlit
+pyngrok
+ultralytics
+opencv-python
+numpy
+pandas
+trimesh
+plotly
