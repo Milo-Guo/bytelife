@@ -99,6 +99,7 @@ python scripts/new.py --slug tomato-egg --title "番茄炒蛋" --category 做菜
 | `title`、`summary` | 标题和首页上的一句话摘要 |
 | `category` | 分类，首页筛选自动生成。用简单的词，例如 编程、Windows、做菜、生活 |
 | `type` | 类型：`tutorial`（教程）、`recipe`（食谱）、`post`（随笔）。决定给搜索引擎的结构化数据，食谱还会在页头显示份量和用时 |
+| `author` | 作者，写 `authors.json` 里的作者 id，例如 `"milo"`；几个人合写写成 `["milo", "ajie"]` |
 | `created`、`updated` | 发布和更新日期，格式 `2026-10-22` |
 | `draft` | 可选。`true` 表示草稿，不发布、不进搜索和 RSS |
 | `recipe` | 可选，只用于食谱：`{"servings": "2 人份", "minutes": 15}` |
@@ -108,6 +109,23 @@ python scripts/new.py --slug tomato-egg --title "番茄炒蛋" --category 做菜
 食谱正文里，`## 用料` 和 `## 做法` 两节下的列表会自动整理成食谱结构化数据（每行一项），所以这两节请用列表写。模板在 `scripts/templates/`，可以按自己的习惯改。
 
 `content/` 里没写进 `articles.json` 的 Markdown 也不会发布。
+
+## 多人写作
+
+作者登记在 `authors.json`，第一位是站长：
+
+```json
+[
+  {"id": "milo", "name": "Milo Guo", "github": "Milo-Guo", "bio": "一句话简介"},
+  {"id": "ajie", "name": "阿杰", "github": "a-jie", "bio": "爱做饭的程序员", "url": "https://example.com/"}
+]
+```
+
+- `id` 是作者页网址：`/bytelife/authors/ajie/`，只能用小写字母、数字和连字符，定了别改；`name` 是显示的名字；`github`、`bio`、`url`（只接受 https）可选。
+- 每位作者都有自己的分区页，列出简介、GitHub 链接和 TA 写过的全部文章（包括合写的）；文章页头的作者名链到分区页，给搜索引擎的结构化数据和 RSS 也带作者。
+- 有两位以上作者发表过文章时，首页每篇会显示作者，多出“N 位作者”和页脚“作者”入口（`/bytelife/authors/`）；只有你一个人时这些都不出现。首页搜索作者名能找到 TA 的文章。
+- 邀请新作者：先把 TA 加进 `authors.json`，再按需要在仓库 **Settings → Collaborators** 邀请 TA，或让 TA 用 PR 投稿（见“安全与恢复”）。
+- 署名怎么来：写作页“文章信息”里勾选作者，新建时默认勾选和所连 GitHub 账号对应的作者；“新建文章”表单不填作者时按运行者的 GitHub 账号自动署名，`authors.json` 里没有这个账号就会报错提醒先登记；`python scripts/new.py --author ajie` 指定作者。
 
 ### 写法约定
 
@@ -140,6 +158,7 @@ python scripts/new.py --slug tomato-egg --title "番茄炒蛋" --category 做菜
 
 - 网站没有后台和登录，访客只能输入搜索词。搜索在浏览器本地完成，不发给任何服务，也没有统计和追踪脚本。
 - 写作页是唯一会连接外部服务的页面：它只能访问 `api.github.com`，预览里的原生 HTML 一律按文字显示、不执行。任何人都能打开写作页，但没有对仓库有写权限的令牌就提交不了。令牌只在内存里，建议用只授权 `bytelife`、只给 Contents 读写、30 天过期的细粒度令牌。
+- 协作者对整个仓库都有写权限，没法只限制在某个作者的文章上。人多以后建议给 `main` 加规则：禁止强制推送和删除；需要你先过目时，再加“合并前需要 PR 和审核”，把自己设为可绕过。不想给权限的人可以直接在 GitHub 上编辑文章，GitHub 会替 TA 发起 PR，构建检查自动运行，你确认后合并。
 - “新建文章”工作流需要写仓库的权限，只有对仓库有写权限的人能运行；表单内容只通过环境变量交给脚本，`test_build.py` 会检查以后修改时没有把输入直接拼进命令。
 - 每个页面用 `<meta>` 声明内容安全策略（CSP）：只允许本站的脚本、样式、图片和索引，只放行一段主题初始化脚本（按哈希），并开启 Trusted Types。GitHub Pages 不能自定义响应头，所以防点击劫持的 `frame-ancestors` 等只能写在响应头里的项目目前无法设置。
 - 发布流程里的官方动作固定到完整提交 SHA，Python 依赖固定版本和哈希；升级时同时改版本注释和 SHA。

@@ -27,6 +27,9 @@ on:
       minutes:
         description: 食谱大约用时，只写数字，单位分钟（可不填）
         required: false
+      author:
+        description: 作者 id（authors.json 里的 id，几个人用逗号隔开）；不填就按运行者的 GitHub 账号自动署名
+        required: false
 permissions: {}
 concurrency:
   group: bytelife-new-article
@@ -53,10 +56,13 @@ jobs:
           SUMMARY: ${{ inputs.summary }}
           SERVINGS: ${{ inputs.servings }}
           MINUTES: ${{ inputs.minutes }}
+          AUTHOR: ${{ inputs.author }}
+          ACTOR: ${{ github.actor }}
         run: |
           args=(--slug "$SLUG" --title "$TITLE" --category "$CATEGORY" --type "$TYPE" --summary "$SUMMARY")
           if [ -n "$SERVINGS" ]; then args+=(--servings "$SERVINGS"); fi
           if [ -n "$MINUTES" ]; then args+=(--minutes "$MINUTES"); fi
+          if [ -n "$AUTHOR" ]; then args+=(--author "$AUTHOR"); else args+=(--github-user "$ACTOR"); fi
           python scripts/new.py "${args[@]}"
           python scripts/build.py
           python scripts/check.py

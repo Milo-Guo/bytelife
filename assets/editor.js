@@ -21,6 +21,11 @@
     title: $('m-title'), summary: $('m-summary'), category: $('m-category'), type: $('m-type'),
     updated: $('m-updated'), draft: $('m-draft'), servings: $('m-servings'), minutes: $('m-minutes'),
   };
+  const authorBox = $('m-authors');
+  const authorName = id => (data.authors.find(a => a.id === id) || { name: id }).name;
+  const asList = value => (Array.isArray(value) ? value : value ? [value] : []);
+  // 连接令牌后，新文章默认署名为和 GitHub 账号对应的作者；没对应上就用站长（authors.json 第一位）。
+  const defaultAuthor = () => (data.authors.find(a => state.login && a.github && a.github.toLowerCase() === state.login.toLowerCase()) || data.authors[0]).id;
   const state = { slug: null, isNew: false, base: null, token: null, login: null, catalog: data.articles.slice(), lineTops: [], anchors: [] };
 
   /* ---------- 小工具 ---------- */
@@ -186,7 +191,7 @@
     kicker.append(el('span', 'badge', meta.category || '分类'));
     if (meta.draft) kicker.append(el('span', 'badge badge-draft', '草稿 · 未发布'));
     const facts = el('p', 'article-meta');
-    facts.append(el('span', null, 'Milo Guo'), el('span', null, `发布 ${meta.created}`), el('span', null, `更新 ${meta.updated}`));
+    facts.append(el('span', 'byline', asList(meta.author).map(authorName).join('、') || '（还没选作者）'), el('span', null, `发布 ${meta.created}`), el('span', null, `更新 ${meta.updated}`));
     if (meta.recipe && meta.recipe.servings) facts.append(el('span', null, meta.recipe.servings));
     if (meta.recipe && meta.recipe.minutes) facts.append(el('span', null, `约 ${meta.recipe.minutes} 分钟`));
     els.head.replaceChildren(kicker, el('h1', null, meta.title || '（还没有标题）'), el('p', 'article-summary', meta.summary), facts);
@@ -307,6 +312,8 @@
       summary: field.summary.value.trim(), created: base.created || state.created || today(), updated: field.updated.value || today(),
       draft: field.draft.checked,
     };
+    const ids = [...authorBox.querySelectorAll('input:checked')].map(input => input.value);
+    meta.author = ids.length === 1 ? ids[0] : ids;
     if (meta.type === 'recipe') {
       const recipe = {};
       if (field.servings.value.trim()) recipe.servings = field.servings.value.trim();
@@ -325,22 +332,26 @@
     field.servings.value = (meta.recipe && meta.recipe.servings) || '';
     field.minutes.value = (meta.recipe && meta.recipe.minutes) || '';
     els.meta.dataset.type = field.type.value;
+    const ids = asList(meta.author);
+    for (const input of authorBox.querySelectorAll('input')) input.checked = ids.includes(input.value);
     state.created = meta.created || today();
   }
   const compareMeta = meta => {
-    const { slug, title, category, type, summary, created, updated, draft = false, recipe = null } = meta || {};
-    return { slug, title, category, type, summary, created, updated, draft: Boolean(draft), recipe: recipe || null };
+    const { slug, title, category, type, author, summary, created, updated, draft = false, recipe = null } = meta || {};
+    return { slug, title, category, type, author: asList(author), summary, created, updated, draft: Boolean(draft), recipe: recipe || null };
   };
   function problems(meta) {
     const list = [];
     if (!SLUG.test(meta.slug || '')) list.push('英文名只能用小写字母、数字和连字符');
     if (!meta.title) list.push('标题不能为空');
+    if (!asList(meta.author).length) list.push('至少选一位作者');
     if (!meta.summary) list.push('摘要不能为空');
     if (!meta.category || meta.category === data.all) list.push(`分类不能为空，也不能叫“${data.all}”`);
     if (!/^\d{4}-\d{2}-\d{2}$/.test(meta.updated) || meta.updated < meta.created) list.push('更新日期不能早于发布日期');
     if (!els.text.value.trim()) list.push('正文是空的');
     return list;
   }
+  authorBox.addEventListener('change', () => { renderHead(readMeta()); changed(); });
   Object.values(field).forEach(input => input.addEventListener('input', () => {
     els.meta.dataset.type = field.type.value;
     renderHead(readMeta());
@@ -667,13 +678,26 @@
       const type = input('类型', { tag: 'select' });
       Object.entries(data.types).forEach(([key, label]) => { const option = el('option', null, label); option.value = key; type.append(option); });
       const summary = input('一句话摘要', { tag: 'textarea', rows: '2' });
+      const who = el('fieldset', 'ed-authors');
+      who.append(el('legend', null, '作者'));
+      for (const author of data.authors) {
+        const label = el('label', 'check');
+        const box = el('input');
+        box.type = 'checkbox';
+        box.value = author.id;
+        box.checked = author.id === defaultAuthor();
+        label.append(box, author.name);
+        who.append(label);
+      }
+      form.append(who);
       category.addEventListener('input', () => {
         if (/菜|食|烘焙/.test(category.value)) type.value = 'recipe'; else if (category.value === '生活') type.value = 'post';
       });
       const error = el('p', 'ed-error');
       const create = button('创建草稿', () => {
+        const ids = [...who.querySelectorAll('input:checked')].map(box => box.value);
         const meta = { slug: slug.value.trim(), title: title.value.trim(), category: category.value.trim(), type: type.value,
-          summary: summary.value.trim(), created: today(), updated: today(), draft: true };
+          author: ids.length === 1 ? ids[0] : ids, summary: summary.value.trim(), created: today(), updated: today(), draft: true };
         const taken = state.catalog.some(a => a.slug === meta.slug) || readRecord(meta.slug).working;
         const list = taken ? ['这个英文名已经用过了'] : problems({ ...meta, updated: meta.created }).filter(p => p !== '正文是空的');
         if (list.length) { error.textContent = list.join('；'); return; }
@@ -733,7 +757,7 @@
   /* ---------- 提交 ---------- */
   function catalogEntry(existing, meta) {
     const entry = existing ? { ...existing } : {};
-    for (const key of ['slug', 'title', 'category', 'type', 'summary', 'created', 'updated']) entry[key] = meta[key];
+    for (const key of ['slug', 'title', 'category', 'type', 'author', 'summary', 'created', 'updated']) entry[key] = meta[key];
     if (meta.draft) entry.draft = true; else delete entry.draft;
     if (meta.recipe) entry.recipe = meta.recipe; else delete entry.recipe;
     return entry;

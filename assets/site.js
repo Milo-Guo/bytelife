@@ -118,7 +118,7 @@
         .then(data => {
           if (!Array.isArray(data)) throw new Error('索引格式不对');
           index = data.filter(a => typeof a.url === 'string' && a.url.startsWith(`${base}articles/`)).map(a => ({
-            ...a, titleLower: a.title.toLowerCase(), summaryLower: a.summary.toLowerCase(),
+            ...a, titleLower: a.title.toLowerCase(), summaryLower: `${a.summary} ${a.authors || ''}`.toLowerCase(),
             sections: a.sections.map(([id, title, text]) => ({ id, title, text, lower: text.toLowerCase(), titleLower: title.toLowerCase() })),
           }));
           return index;
@@ -185,7 +185,9 @@
       for (const { a, hits, total } of results) {
         const item = el('li', 'entry is-result');
         const meta = el('p', 'entry-meta');
-        meta.append(el('span', 'entry-cat', a.category), el('span', null, `更新 ${a.updated}`));
+        meta.append(el('span', 'entry-cat', a.category));
+        if (list.dataset.multiAuthor === 'true' && a.authors) meta.append(el('span', 'entry-author', a.authors));
+        meta.append(el('span', null, `更新 ${a.updated}`));
         if (total) meta.append(el('span', 'entry-hits', `正文 ${total} 处`));
         const title = el('h3', 'entry-title');
         const link = el('a');

@@ -18,6 +18,8 @@ import build  # noqa: E402
 import check  # noqa: E402
 import new  # noqa: E402
 
+AUTHORS = build.load_authors([{'id': 'milo', 'name': 'Milo Guo', 'github': 'Milo-Guo'}, {'id': 'ajie', 'name': '阿杰', 'github': 'a-jie'}])
+
 
 class Elements(HTMLParser):
     def __init__(self):
@@ -142,35 +144,53 @@ class MetadataTest(unittest.TestCase):
         self.tmp.cleanup()
 
     def meta(self, **changes):
-        return {'slug': 'ok-post', 'title': '标题', 'category': '做菜', 'type': 'tutorial', 'summary': '摘要',
+        return {'slug': 'ok-post', 'title': '标题', 'category': '做菜', 'type': 'tutorial', 'author': 'milo', 'summary': '摘要',
                 'created': '2026-10-01', 'updated': '2026-10-02', **changes}
 
     def test_valid_entry(self):
-        self.assertEqual(build.validate_articles([self.meta()], self.content)[0]['slug'], 'ok-post')
+        self.assertEqual(build.validate_articles([self.meta()], self.content, authors=AUTHORS)[0]['slug'], 'ok-post')
 
     def test_unsafe_slugs_rejected(self):
         for slug in ['../secret', '..', 'a/b', 'a\\b', 'Upper', 'x.md', 'a_b', '', ' ok-post', 'ok-post/']:
             with self.subTest(slug=slug), self.assertRaises(SystemExit):
-                build.validate_articles([self.meta(slug=slug)], self.content)
+                build.validate_articles([self.meta(slug=slug)], self.content, authors=AUTHORS)
 
     def test_other_bad_metadata(self):
         for changes in [{'slug': 'missing'}, {'created': '2026/10/01'}, {'updated': '2026-09-01'}, {'category': '全部'},
                         {'title': ''}, {'note': {'date': '2026-10-02', 'text': '更新', 'anchor': 'x" onclick="y'}}]:
             with self.subTest(changes=changes), self.assertRaises(SystemExit):
-                build.validate_articles([self.meta(**changes)], self.content)
+                build.validate_articles([self.meta(**changes)], self.content, authors=AUTHORS)
         with self.assertRaises(SystemExit):
-            build.validate_articles([self.meta(), self.meta()], self.content)
+            build.validate_articles([self.meta(), self.meta()], self.content, authors=AUTHORS)
 
     def test_type_draft_and_recipe_fields(self):
-        build.validate_articles([self.meta(type='recipe', draft=True, recipe={'servings': '2 人份', 'minutes': 20})], self.content)
-        build.validate_articles([self.meta(type='post', draft=False)], self.content)
+        build.validate_articles([self.meta(type='recipe', draft=True, recipe={'servings': '2 人份', 'minutes': 20})], self.content, authors=AUTHORS)
+        build.validate_articles([self.meta(type='post', draft=False)], self.content, authors=AUTHORS)
         bad = [{'type': None}, {'type': 'video'}, {'draft': 'yes'}, {'recipe': {'minutes': 20}},
                {'type': 'recipe', 'recipe': {'minutes': '20'}}, {'type': 'recipe', 'recipe': {'minutes': True}},
                {'type': 'recipe', 'recipe': {'minutes': 0}}, {'type': 'recipe', 'recipe': {'servings': ''}},
                {'type': 'recipe', 'recipe': {'calories': 300}}, {'type': 'recipe', 'recipe': '2 人份'}]
         for changes in bad:
             with self.subTest(changes=changes), self.assertRaises(SystemExit):
-                build.validate_articles([self.meta(**changes)], self.content)
+                build.validate_articles([self.meta(**changes)], self.content, authors=AUTHORS)
+
+
+    def test_author_field(self):
+        build.validate_articles([self.meta(author=['milo', 'ajie'])], self.content, authors=AUTHORS)
+        for value in [None, '', [], 'nobody', ['milo', 'milo'], ['milo', 'nobody'], 3]:
+            with self.subTest(author=value), self.assertRaises(SystemExit):
+                build.validate_articles([self.meta(author=value)], self.content, authors=AUTHORS)
+
+    def test_authors_file(self):
+        good = {'id': 'ajie', 'name': '阿杰'}
+        build.load_authors([good, {'id': 'b', 'name': 'B', 'github': 'b-user', 'bio': '简介', 'url': 'https://b.example.com/'}])
+        bad = [[], [{'id': 'Bad', 'name': 'x'}], [{'id': '../x', 'name': 'x'}], [good, good], [{'id': 'a', 'name': ''}],
+               [{'id': 'a', 'name': 'a', 'github': 'bad name'}], [{'id': 'a', 'name': 'a', 'url': 'javascript:alert(1)'}],
+               [{'id': 'a', 'name': 'a', 'url': 'http://plain.example.com'}], [{'id': 'a', 'name': 'a', 'email': 'x@y.z'}],
+               [{'id': 'a', 'name': 'a', 'github': 'Same'}, {'id': 'b', 'name': 'b', 'github': 'same'}]]
+        for data in bad:
+            with self.subTest(data=data), self.assertRaises(SystemExit):
+                build.load_authors(data)
 
 
 class TypeTest(unittest.TestCase):
@@ -200,7 +220,7 @@ class TypeTest(unittest.TestCase):
 
 
 class NewArticleTest(unittest.TestCase):
-    ORIGINAL = ('[\r\n  {\r\n    "slug": "old-post",\r\n    "title": "旧文",\r\n    "category": "编程",\r\n    "type": "tutorial",\r\n'
+    ORIGINAL = ('[\r\n  {\r\n    "slug": "old-post",\r\n    "title": "旧文",\r\n    "category": "编程",\r\n    "type": "tutorial",\r\n    "author": "milo",\r\n'
                 '    "summary": "摘要",\r\n    "created": "2026-10-01",\r\n    "updated": "2026-10-01"\r\n  }\r\n]\r\n')
 
     def setUp(self):
@@ -209,12 +229,14 @@ class NewArticleTest(unittest.TestCase):
         (self.root/'content').mkdir()
         (self.root/'content'/'old-post.md').write_text('旧文', encoding='utf-8')
         (self.root/'articles.json').write_bytes(self.ORIGINAL.encode('utf-8'))
+        (self.root/'authors.json').write_text(json.dumps([{'id': 'milo', 'name': 'Milo Guo', 'github': 'Milo-Guo'},
+                                                          {'id': 'ajie', 'name': '阿杰', 'github': 'a-jie'}]), encoding='utf-8')
 
     def tearDown(self):
         self.tmp.cleanup()
 
     def meta(self, **changes):
-        return {'slug': 'tomato-egg', 'title': '番茄炒蛋', 'category': '做菜', 'type': 'recipe', 'summary': '家常菜',
+        return {'slug': 'tomato-egg', 'title': '番茄炒蛋', 'category': '做菜', 'type': 'recipe', 'author': 'ajie', 'summary': '家常菜',
                 'created': '2026-11-01', 'updated': '2026-11-01', 'draft': True, **changes}
 
     def catalog_text(self):
@@ -231,13 +253,57 @@ class NewArticleTest(unittest.TestCase):
 
     def test_refuses_unsafe_or_conflicting_input(self):
         (self.root/'content'/'taken.md').write_text('别覆盖我', encoding='utf-8')
-        for changes in [{'slug': '../evil'}, {'slug': 'old-post'}, {'slug': 'taken'}, {'category': '全部'}, {'type': 'video'}]:
+        for changes in [{'slug': '../evil'}, {'slug': 'old-post'}, {'slug': 'taken'}, {'category': '全部'}, {'type': 'video'}, {'author': 'nobody'}]:
             with self.subTest(changes=changes), self.assertRaises((SystemExit, FileNotFoundError)):
                 new.create_article(self.meta(**changes), self.root)
             self.assertEqual(self.catalog_text(), self.ORIGINAL)
         self.assertEqual((self.root/'content'/'taken.md').read_text(encoding='utf-8'), '别覆盖我')
         self.assertEqual(sorted(p.name for p in (self.root/'content').iterdir()), ['old-post.md', 'taken.md'])
         self.assertFalse((self.root/'evil.md').exists())
+
+
+    def test_resolve_author(self):
+        self.assertEqual(new.resolve_author(AUTHORS, 'ajie'), 'ajie')
+        self.assertEqual(new.resolve_author(AUTHORS, 'milo，ajie'), ['milo', 'ajie'])
+        self.assertEqual(new.resolve_author(AUTHORS, github_user='A-JIE'), 'ajie')
+        self.assertEqual(new.resolve_author(AUTHORS), 'milo')
+        for args in [('nobody',), (None, 'stranger')]:
+            with self.subTest(args=args), self.assertRaises(SystemExit):
+                new.resolve_author(AUTHORS, *args)
+
+
+class AuthorPageTest(unittest.TestCase):
+    def article(self, slug, author, **extra):
+        meta = {'slug': slug, 'title': f'标题 {slug}', 'category': '做菜', 'type': 'post', 'author': author, 'summary': '摘要',
+                'created': '2026-10-01', 'updated': '2026-10-02', **extra}
+        meta['author_list'] = [AUTHORS[i] for i in build.author_ids(meta)]
+        return meta
+
+    def test_structured_data_names_real_authors(self):
+        one = build.structured_data(self.article('a', 'milo'), 'u')
+        self.assertEqual(one['author'], {'@type': 'Person', 'name': 'Milo Guo', 'url': build.ORIGIN+'/bytelife/authors/milo/',
+                                         'sameAs': ['https://github.com/Milo-Guo']})
+        two = build.structured_data(self.article('b', ['milo', 'ajie']), 'u')
+        self.assertEqual([p['name'] for p in two['author']], ['Milo Guo', '阿杰'])
+
+    def test_author_page_lists_only_their_articles(self):
+        articles = [self.article('mine', 'ajie'), self.article('shared', ['milo', 'ajie']), self.article('other', 'milo')]
+        page = build.author_page(AUTHORS['ajie'], articles)
+        self.assertIn('/bytelife/articles/mine/', page)
+        self.assertIn('/bytelife/articles/shared/', page)
+        self.assertNotIn('/bytelife/articles/other/', page)
+        self.assertIn('2 篇文章', page)
+        self.assertIn('https://github.com/a-jie', page)
+
+    def test_author_text_is_escaped(self):
+        evil = build.load_authors([{'id': 'x', 'name': '<img src=x onerror=alert(1)>', 'bio': '<script>alert(2)</script>'}])['x']
+        page = build.author_page(evil, [])
+        self.assertNotIn('<img', page)
+        self.assertNotIn('<script', page)
+        meta = self.article('a', 'milo')
+        meta['author_list'] = [evil]
+        self.assertNotIn('<img', build.byline(meta))
+        self.assertNotIn('<img', build.authors_index({'x': evil}, []))
 
 
 class EditorAndHistoryTest(unittest.TestCase):
@@ -252,13 +318,14 @@ class EditorAndHistoryTest(unittest.TestCase):
     def test_editor_data_cannot_break_out_of_script(self):
         catalog = [{'slug': 'a', 'title': '</script><script>alert(1)</script>', 'category': '做菜', 'type': 'recipe',
                     'summary': '<!--', 'created': '2026-10-01', 'updated': '2026-10-01'}]
-        page = build.editor_page(catalog)
+        page = build.editor_page(catalog, AUTHORS)
         blob = page.split('id="editor-data">')[1].split('</script>')[0]
         self.assertNotIn('<', blob)
         data = json.loads(blob)
         self.assertEqual(data['articles'][0]['title'], catalog[0]['title'])
         self.assertEqual(set(data['templates']), set(build.TYPES))
         self.assertEqual(data['repo'], 'Milo-Guo/bytelife')
+        self.assertEqual([a['id'] for a in data['authors']], ['milo', 'ajie'])
 
     def test_revisions_come_from_git(self):
         self.assertEqual(build.revisions('content/no-such-file.md'), [])

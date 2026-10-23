@@ -20,6 +20,22 @@ TEMPLATES = Path(__file__).resolve().parent/'templates'
 TYPE_NAMES = {**{key: key for key in build.TYPES}, **{label: key for key, (label, _) in build.TYPES.items()}}
 
 
+def resolve_author(authors, author=None, github_user=None):
+    """署名：写了作者 id 就用它（几个人用逗号隔开）；否则按 GitHub 用户名找对应作者；都没有就署名站长。"""
+    if author:
+        ids = [item.strip() for item in author.replace('，', ',').split(',') if item.strip()]
+        unknown = [item for item in ids if item not in authors]
+        if not ids or unknown:
+            raise build.BuildError(f'作者 {"、".join(unknown) or author} 不在 authors.json 里。已有：{"、".join(authors)}')
+        return ids[0] if len(ids) == 1 else ids
+    if github_user:
+        for aid, info in authors.items():
+            if (info.get('github') or '').lower() == github_user.lower():
+                return aid
+        raise build.BuildError(f'authors.json 里没有 GitHub 用户「{github_user}」对应的作者。先把 TA 加进 authors.json，或在表单里填作者 id。')
+    return next(iter(authors))
+
+
 def create_article(meta, root=build.ROOT, templates=TEMPLATES):
     """写入 Markdown 和 articles.json。任何一步校验失败都不留下半成品，返回新文件路径。"""
     if not build.SLUG.match(meta['slug']) or len(meta['slug']) > 80:
@@ -39,7 +55,7 @@ def create_article(meta, root=build.ROOT, templates=TEMPLATES):
     except FileExistsError:
         raise build.BuildError(f'content/{meta["slug"]}.md 已经存在，没有覆盖') from None
     try:
-        build.validate_articles(catalog+[meta], root/'content')
+        build.validate_articles(catalog+[meta], root/'content', authors=build.read_authors(root))
     except BaseException:
         path.unlink()
         raise
@@ -69,6 +85,8 @@ def main(argv=None):
     parser.add_argument('--summary', help='首页列表里显示的一句话摘要')
     parser.add_argument('--servings', help='食谱份量，例如“2 人份”（可选）')
     parser.add_argument('--minutes', type=int, help='食谱大约用时，单位分钟（可选）')
+    parser.add_argument('--author', help='作者 id（authors.json 里的 id），几个人合写用逗号隔开；不写就按 --github-user 或署名站长')
+    parser.add_argument('--github-user', help='按 GitHub 用户名找对应作者（新建文章表单会自动填运行者）')
     parser.add_argument('--publish', action='store_true', help='不标记草稿，下次构建就发布')
     args = parser.parse_args(argv)
 
@@ -92,9 +110,16 @@ def main(argv=None):
     if kind is None:
         parser.error('--type 只能是 '+build.TYPE_HINT)
     summary = args.summary or ask('一句话摘要（显示在首页列表里）', check=lambda v: None if v else '摘要不能为空')
+    authors = build.read_authors()
+    if args.author or args.github_user or not interactive:
+        author = resolve_author(authors, args.author, args.github_user)
+    else:
+        listing = '、'.join(f'{aid}（{info["name"]}）' for aid, info in authors.items())
+        author = resolve_author(authors, ask(f'作者 id（已有：{listing}；几个人合写用逗号隔开）', next(iter(authors)),
+                                             check=lambda v: None if all(i.strip() in authors for i in v.replace('，', ',').split(',') if i.strip()) else '请填 authors.json 里的作者 id'))
 
     today = date.today().isoformat()
-    meta = {'slug': slug, 'title': title, 'category': category, 'type': kind, 'summary': summary,
+    meta = {'slug': slug, 'title': title, 'category': category, 'type': kind, 'author': author, 'summary': summary,
             'created': today, 'updated': today}
     if not args.publish:
         meta['draft'] = True

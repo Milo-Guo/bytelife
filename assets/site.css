@@ -305,6 +305,12 @@ a.badge:hover { background: color-mix(in srgb, var(--accent) 18%, transparent); 
 .article-end > p { margin: 0; color: var(--ink-2); font-size: 15px; }
 .article-end .end-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px; margin: 20px 0 32px; }
 .article-end .button .icon { width: 16px; height: 16px; }
+.byline a, .meta-link { display: inline-flex; align-items: center; min-height: 28px; margin: -3px 0; }
+.byline a { color: var(--ink); text-decoration: underline; text-decoration-color: transparent; text-underline-offset: 3px; transition: text-decoration-color var(--fast) var(--ease); }
+.byline a:hover { text-decoration-color: currentColor; }
+.entry-author { color: var(--ink-2); }
+.intro .author-kicker { margin: 0 0 4px; color: var(--muted); font-size: 13px; letter-spacing: .08em; }
+.author-main .back-link { margin-bottom: 16px; }
 .meta-link { display: inline-flex; align-items: center; min-height: 28px; margin: -3px 0; color: var(--accent); }
 .revisions { margin: 0 0 28px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
 .revisions summary { display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 16px; font-size: 14px; font-weight: 600; cursor: pointer; list-style: none; }
@@ -363,6 +369,18 @@ a.badge:hover { background: color-mix(in srgb, var(--accent) 18%, transparent); 
 .prose .callout-warning .callout-title { color: var(--warning); }
 .prose .callout-caution { border-left-color: var(--caution); background: var(--caution-bg); }
 .prose .callout-caution .callout-title { color: var(--caution); }
+
+/* 折叠块（<details>）：常用来收起长代码，展开后代码块和外框贴齐 */
+.prose details { border: 1px solid var(--line); border-radius: 12px; background: var(--surface); overflow: hidden; }
+.prose details > summary { display: flex; align-items: center; gap: 10px; min-height: 46px; padding: 0 16px; cursor: pointer; font-size: .94em; font-weight: 600; list-style: none; transition: background-color var(--fast) var(--ease); }
+.prose details > summary:hover { background: var(--hover); }
+.prose details > summary::-webkit-details-marker { display: none; }
+.prose details > summary::before { content: ""; flex: none; width: 7px; height: 7px; border-right: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor; transform: rotate(-45deg); transition: transform var(--fast) var(--ease); }
+.prose details[open] > summary::before { transform: rotate(45deg); }
+.prose details[open] > summary { border-bottom: 1px solid var(--line); }
+.prose details > :not(summary) { margin: 14px 16px; }
+.prose details > .code-block { margin: 0; border: 0; border-radius: 0; }
+.prose details > .code-block + * { margin-top: 14px; }
 
 /* 代码块、表格：内容超宽时只在自己的区域里横向滚动，两侧阴影提示还能滑 */
 .code-block, .table-wrap { margin-top: 1.25em; }

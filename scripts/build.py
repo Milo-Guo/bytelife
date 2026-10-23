@@ -192,8 +192,16 @@ def convert_link(url):
 
 
 def image_size(path):
-    """读取 PNG、JPEG、WebP、GIF 的像素尺寸。图片带上宽高，懒加载时页面不会跳。"""
+    """读取 PNG、JPEG、WebP、GIF、SVG 的尺寸。图片带上宽高，懒加载时页面不会跳。"""
     data = path.read_bytes()
+    if path.suffix.lower() == '.svg':
+        root = re.search(r'<svg\b[^>]*>', data[:4096].decode('utf-8', 'ignore'))
+        attrs = dict(re.findall(r'\b(width|height|viewBox)\s*=\s*"([^"]*)"', root[0])) if root else {}
+        size = [re.fullmatch(r'(\d+(?:\.\d+)?)(?:px)?', attrs.get(key, '').strip()) for key in ('width', 'height')]
+        if all(size):
+            return round(float(size[0][1])), round(float(size[1][1]))
+        box = attrs.get('viewBox', '').replace(',', ' ').split()
+        return (round(float(box[2])), round(float(box[3]))) if len(box) == 4 else None
     if data[:8] == b'\x89PNG\r\n\x1a\n':
         return struct.unpack('>II', data[16:24])
     if data[:6] in (b'GIF87a', b'GIF89a'):
@@ -435,15 +443,25 @@ def recipe_parts(raw):
     return parts
 
 
+def person(author):
+    data = {'@type': 'Person', 'name': author['name'], 'url': ORIGIN+author_url(author['id'])}
+    same = ([f'https://github.com/{author["github"]}'] if author.get('github') else []) + ([author['url']] if author.get('url') else [])
+    if same:
+        data['sameAs'] = same
+    return data
+
+
 def structured_data(meta, canonical):
     kind = TYPES[meta.get('type', 'tutorial')][1]
     data = {
         '@context': 'https://schema.org', '@type': kind,
         'headline': meta['title'], 'description': meta['summary'],
         'datePublished': meta['created'], 'dateModified': meta['updated'],
-        'author': {'@type': 'Person', 'name': 'Milo Guo', 'url': 'https://github.com/Milo-Guo'},
         'mainEntityOfPage': canonical,
     }
+    people = [person(author) for author in meta.get('author_list') or []]
+    if people:
+        data['author'] = people[0] if len(people) == 1 else people
     if meta.get('image'):
         data['image'] = [meta['image']]
     if kind == 'Recipe':
@@ -495,8 +513,57 @@ def iso_date(value, where):
     raise BuildError(f'articles.json：{where} 的日期要写成 2026-10-22 这样的格式')
 
 
-def validate_articles(data, content_dir=CONTENT):
-    """检查 articles.json。slug 只能是小写字母、数字和连字符，对应的 Markdown 必须在 content/ 里。"""
+GITHUB_USER = re.compile(r'[A-Za-z0-9](?:[A-Za-z0-9-]{0,38})\Z')
+
+
+def load_authors(data):
+    """检查 authors.json：每位作者要有 id（作者页网址用，小写字母、数字、连字符）和名字；
+    可选 GitHub 用户名、一句话简介和个人主页（只接受 https）。第一位作者是站长，旧条目和存档默认署名站长。"""
+    if not isinstance(data, list) or not data:
+        raise BuildError('authors.json：应该是一个非空数组')
+    authors, githubs = {}, set()
+    for number, author in enumerate(data, 1):
+        where = f'authors.json 第 {number} 项'
+        if not isinstance(author, dict):
+            raise BuildError(f'{where} 不是对象')
+        if set(author) - {'id', 'name', 'github', 'bio', 'url'}:
+            raise BuildError(f'{where} 只能有 id、name、github、bio、url 这几项')
+        aid = author.get('id')
+        if not isinstance(aid, str) or not SLUG.match(aid) or len(aid) > 40:
+            raise BuildError(f'{where} 的 id 只能用小写字母、数字和连字符')
+        if aid in authors:
+            raise BuildError(f'authors.json：作者 id「{aid}」重复')
+        if not isinstance(author.get('name'), str) or not author['name'].strip():
+            raise BuildError(f'{where} 缺少 name')
+        github = author.get('github')
+        if github is not None and (not isinstance(github, str) or not GITHUB_USER.match(github) or github.lower() in githubs):
+            raise BuildError(f'{where} 的 github 要写 GitHub 用户名，且不能和别人重复')
+        if not isinstance(author.get('bio', ''), str):
+            raise BuildError(f'{where} 的 bio 要写成一句话')
+        url = author.get('url')
+        if url is not None and (not isinstance(url, str) or not url.startswith('https://') or safe_url(url) != url):
+            raise BuildError(f'{where} 的 url 只接受 https:// 开头的网址')
+        githubs.add((github or '').lower())
+        authors[aid] = author
+    return authors
+
+
+def read_authors(root=ROOT):
+    return load_authors(json.loads((root/'authors.json').read_text(encoding='utf-8')))
+
+
+def author_ids(meta):
+    value = meta.get('author')
+    return [value] if isinstance(value, str) else list(value) if isinstance(value, list) else []
+
+
+def author_url(aid):
+    return f'{BASE}authors/{aid}/'
+
+
+def validate_articles(data, content_dir=CONTENT, authors=None):
+    """检查 articles.json。slug 只能是小写字母、数字和连字符，对应的 Markdown 必须在 content/ 里，作者必须在 authors.json 里。"""
+    authors = read_authors() if authors is None else authors
     if not isinstance(data, list) or not data:
         raise BuildError('articles.json：应该是一个非空数组')
     seen, articles = set(), []
@@ -533,6 +600,11 @@ def validate_articles(data, content_dir=CONTENT):
             raise BuildError(f'articles.json：{where} 的 type 要写成 {TYPE_HINT} 之一')
         if not isinstance(meta.get('draft', False), bool):
             raise BuildError(f'articles.json：{where} 的 draft 只能是 true 或 false')
+        ids = author_ids(meta)
+        if (not isinstance(meta.get('author'), (str, list)) or not ids or len(set(ids)) != len(ids)
+                or not all(isinstance(i, str) and i in authors for i in ids)):
+            raise BuildError(f'articles.json：{where} 的 author 要写 authors.json 里的作者 id，例如 "{next(iter(authors))}"，'
+                             f'几个人合写用 ["a", "b"]')
         recipe = meta.get('recipe')
         if recipe is not None:
             minutes = recipe.get('minutes', 1) if isinstance(recipe, dict) else None
@@ -541,7 +613,7 @@ def validate_articles(data, content_dir=CONTENT):
                     or not isinstance(minutes, int) or isinstance(minutes, bool) or not 0 < minutes <= 10000):
                 raise BuildError(f'articles.json：{where} 的 recipe 只用于食谱，写成 {{"servings": "2 人份", "minutes": 30}}')
         seen.add(slug)
-        articles.append({**meta, 'path': path})
+        articles.append({**meta, 'path': path, 'author_list': [authors[i] for i in ids]})
     return articles
 
 
@@ -616,7 +688,7 @@ def shell(title, description, body, relative='', article=None, noindex=False, pa
 {body}
 <footer class="site-footer"><div class="footer-inner">
 <p>ByteLife · Milo Guo 的学习与生活记录</p>
-<nav class="footer-links" aria-label="站点信息"><a href="{BASE}feed.xml">RSS</a><a href="{REPO}">源码</a><a href="{BASE}migration/">迁移记录</a></nav>
+<nav class="footer-links" aria-label="站点信息">{f'<a href="{BASE}authors/">作者</a>' if SITE_STATE['multi_author'] else ''}<a href="{BASE}feed.xml">RSS</a><a href="{REPO}">源码</a><a href="{BASE}migration/">迁移记录</a></nav>
 <p class="footer-meta"><span>© 2026 Milo Guo</span><button class="text-button theme-reset" type="button" hidden>恢复跟随系统主题</button></p>
 </div></footer>
 </body></html>'''
@@ -657,6 +729,16 @@ def recipe_facts(meta):
 
 
 DRAFT_BADGE = '<span class="badge badge-draft">草稿 · 未发布</span>'
+# 有两位以上作者发表过文章时，首页列表显示作者，页脚出现“作者”入口。
+SITE_STATE = {'multi_author': False}
+
+
+def byline(meta, link=True):
+    names = []
+    for author in meta.get('author_list') or []:
+        name = escape(author['name'])
+        names.append(f'<a class="author-link" href="{author_url(author["id"])}">{name}</a>' if link else name)
+    return '、'.join(names)
 
 
 def revisions(relative):
@@ -719,7 +801,7 @@ def article_page(meta, html, toc, archive=None, revs=()):
 <div class="article-kicker">{kicker}</div>
 <h1>{escape(meta['title'])}</h1>
 <p class="article-summary">{escape(meta['summary'])}</p>
-<p class="article-meta"><span>Milo Guo</span><span>发布 <time datetime="{meta['created']}">{meta['created']}</time></span><span>更新 <time datetime="{meta['updated']}">{meta['updated']}</time></span>{facts}{history}</p>
+<p class="article-meta"><span class="byline">{byline(meta)}</span><span>发布 <time datetime="{meta['created']}">{meta['created']}</time></span><span>更新 <time datetime="{meta['updated']}">{meta['updated']}</time></span>{facts}{history}</p>
 {notice}
 </header>
 <div class="reading-bar"><button class="toc-toggle" type="button" aria-expanded="false" aria-controls="toc">{icon('list')}<span class="reading-current">目录</span>{icon('chevron')}</button></div>
@@ -736,7 +818,7 @@ def article_page(meta, html, toc, archive=None, revs=()):
 </div>'''
 
 
-def entry_html(meta):
+def entry_html(meta, show_author=False):
     url = public_url(meta['slug'])
     note = ''
     if meta.get('note'):
@@ -746,24 +828,27 @@ def entry_html(meta):
     facts = ''.join(f'<span>{fact}</span>' for fact in recipe_facts(meta))
     return (f'<li class="entry" data-category="{escape(meta["category"])}">'
             f'<p class="entry-meta"><span class="entry-cat">{escape(meta["category"])}</span>'
+            f'{f"<span class=entry-author>{byline(meta, link=False)}</span>" if show_author else ""}'
             f'<span>更新 <time datetime="{meta["updated"]}">{meta["updated"]}</time></span>{facts}'
             f'{DRAFT_BADGE if meta.get("draft") else ""}</p>'
             f'<h3 class="entry-title"><a href="{url}">{escape(meta["title"])}</a></h3>'
             f'<p class="entry-summary">{escape(meta["summary"])}</p>{note}</li>')
 
 
-def editor_page(catalog):
+def editor_page(catalog, authors):
     """写作页：页面本身是静态的，文章内容由浏览器向 GitHub 接口读取；这里只放文章列表、模板和渲染规则。"""
-    fields = ('slug', 'title', 'category', 'type', 'summary', 'created', 'updated', 'draft', 'recipe')
+    fields = ('slug', 'title', 'category', 'type', 'author', 'summary', 'created', 'updated', 'draft', 'recipe')
     data = {
         'repo': REPO.removeprefix('https://github.com/'), 'branch': 'main', 'base': BASE, 'all': ALL,
         'types': {key: label for key, (label, _) in TYPES.items()}, 'languages': LANGUAGES, 'callouts': CALLOUTS,
         'templates': {key: (ROOT/'scripts'/'templates'/f'{key}.md').read_text(encoding='utf-8') for key in TYPES},
+        'authors': [{key: a[key] for key in ('id', 'name', 'github') if key in a} for a in authors.values()],
         'articles': [{key: meta[key] for key in fields if key in meta}
                      for meta in sorted(catalog, key=lambda a: (a['created'], a['slug']), reverse=True)],
     }
     categories = ''.join(f'<option value="{escape(c)}"></option>' for c in dict.fromkeys(a['category'] for a in catalog))
     types = ''.join(f'<option value="{key}">{label}</option>' for key, (label, _) in TYPES.items())
+    writers = ''.join(f'<label class="check"><input type="checkbox" value="{escape(a["id"])}">{escape(a["name"])}</label>' for a in authors.values())
     blob = json.dumps(data, ensure_ascii=False).replace('<', '\\u003c')
     return f'''<main id="main" class="editor">
 <div class="ed-bar">
@@ -775,6 +860,7 @@ def editor_page(catalog):
 <label>标题<input id="m-title"></label>
 <label>分类<input id="m-category" list="ed-categories"></label><datalist id="ed-categories">{categories}</datalist>
 <label>类型<select id="m-type">{types}</select></label>
+<fieldset class="ed-authors" id="m-authors"><legend>作者</legend>{writers}</fieldset>
 <label>更新日期<input id="m-updated" type="date"></label>
 <label class="check"><input id="m-draft" type="checkbox">草稿（不发布）</label>
 <label class="recipe-only">份量<input id="m-servings" placeholder="2 人份"></label>
@@ -791,6 +877,47 @@ def editor_page(catalog):
 <script type="application/json" id="editor-data">{blob}</script>'''
 
 
+def author_page(author, articles):
+    """作者分区页：作者简介和 TA 写的全部文章。"""
+    mine = [a for a in articles if author['id'] in author_ids(a)]
+    categories = '、'.join(dict.fromkeys(a['category'] for a in mine))
+    facts = [f'{len(mine)} 篇文章'] + ([f'分类：{escape(categories)}'] if categories else [])
+    if author.get('github'):
+        facts.append(f'<a class="meta-link" href="https://github.com/{author["github"]}">GitHub @{escape(author["github"])}</a>')
+    if author.get('url'):
+        facts.append(f'<a class="meta-link" href="{escape(author["url"])}">个人主页</a>')
+    entries = ''.join(entry_html(a) for a in mine) or '<li class="entry entry-empty"><p class="entry-summary">还没有发表文章。</p></li>'
+    back = f'<a class="back-link" href="{BASE}authors/">{icon("arrow-left")}全部作者</a>' if SITE_STATE['multi_author'] else ''
+    return f'''<main id="main" class="home-main author-main">
+<section class="intro" aria-labelledby="intro-title">
+{back}
+<p class="author-kicker">作者</p>
+<h1 id="intro-title">{escape(author['name'])}</h1>
+{f'<p>{escape(author["bio"])}</p>' if author.get('bio') else ''}
+<p class="intro-meta">{' · '.join(facts)}</p>
+</section>
+<section class="library" aria-labelledby="author-articles">
+<h2 id="author-articles" class="visually-hidden">{escape(author['name'])} 的文章</h2>
+<ol class="entries">{entries}</ol>
+</section>
+</main>'''
+
+
+def authors_index(authors, articles):
+    rows = []
+    for author in authors.values():
+        mine = [a for a in articles if author['id'] in author_ids(a)]
+        categories = '、'.join(dict.fromkeys(a['category'] for a in mine))
+        kinds = f'<span>{escape(categories)}</span>' if categories else ''
+        bio = f'<p class="entry-summary">{escape(author.get("bio", ""))}</p>' if author.get('bio') else ''
+        rows.append(f'<li class="entry"><p class="entry-meta"><span>{len(mine)} 篇文章</span>{kinds}</p>'
+                    f'<h3 class="entry-title"><a href="{author_url(author["id"])}">{escape(author["name"])}</a></h3>{bio}</li>')
+    return f'''<main id="main" class="home-main">
+<section class="intro" aria-labelledby="intro-title"><h1 id="intro-title">作者</h1><p>每位作者都有自己的分区，点名字看 TA 写的全部文章。</p></section>
+<section class="library" aria-label="作者列表"><ol class="entries">{''.join(rows)}</ol></section>
+</main>'''
+
+
 def home_page(articles, index_url):
     categories = list(dict.fromkeys(a['category'] for a in articles))
     counts = [(ALL, len(articles))]+[(c, sum(a['category'] == c for a in articles)) for c in categories]
@@ -799,11 +926,14 @@ def home_page(articles, index_url):
         f'aria-pressed="{"true" if name == ALL else "false"}">{escape(name)}<span class="chip-count" data-total="{count}">{count}</span></button>'
         for name, count in counts)
     latest = max(a['updated'] for a in articles)
+    multi = SITE_STATE['multi_author']
+    count = len({i for a in articles for i in author_ids(a)})
+    writers = f' · <a class="meta-link" href="{BASE}authors/">{count} 位作者</a>' if multi else ''
     return f'''<main id="main" class="home-main">
 <section class="intro" aria-labelledby="intro-title">
 <h1 id="intro-title">Milo 的笔记</h1>
 <p>记录我学编程、修电脑时遇到的问题和解决过程，以后也写做菜和生活。</p>
-<p class="intro-meta">{len(articles)} 篇文章 · 最近更新 <time datetime="{latest}">{latest}</time></p>
+<p class="intro-meta">{len(articles)} 篇文章{writers} · 最近更新 <time datetime="{latest}">{latest}</time></p>
 </section>
 <section id="library" class="library" aria-labelledby="library-title">
 <h2 id="library-title" class="visually-hidden">全部文章</h2>
@@ -816,7 +946,7 @@ def home_page(articles, index_url):
 <div class="chips" role="group" aria-label="按分类筛选">{chips}</div>
 <p id="search-status" class="search-status" role="status"></p>
 <div id="search-notice" class="search-notice" hidden></div>
-<ol id="article-list" class="entries" data-index="{index_url}">{''.join(entry_html(a) for a in articles)}</ol>
+<ol id="article-list" class="entries" data-index="{index_url}" data-multi-author="{str(multi).lower()}">{''.join(entry_html(a, multi) for a in articles)}</ol>
 </section>
 </main>'''
 
@@ -880,7 +1010,10 @@ def main(argv=None):
     parser = argparse.ArgumentParser(description='构建 ByteLife 静态网站。')
     parser.add_argument('--drafts', action='store_true', help='连同草稿一起构建，只用于本地预览，不要拿这次结果发布')
     options = parser.parse_args(argv)
-    articles = validate_articles(json.loads((ROOT/'articles.json').read_text(encoding='utf-8')))
+    authors = read_authors()
+    owner = next(iter(authors.values()))
+    catalog = validate_articles(json.loads((ROOT/'articles.json').read_text(encoding='utf-8')), authors=authors)
+    articles = list(catalog)
     drafts = [a['slug'] for a in articles if a.get('draft')]
     if not options.drafts:
         articles = [a for a in articles if not a.get('draft')]
@@ -888,6 +1021,7 @@ def main(argv=None):
         raise BuildError('articles.json 里没有可发布的文章（全部是草稿？）')
     articles.sort(key=lambda a: (a['created'], a['slug']), reverse=True)
     published = [a for a in articles if not a.get('draft')]
+    SITE_STATE['multi_author'] = len({i for a in published for i in author_ids(a)}) > 1
     reset_output()
     skipped = copy_assets()
 
@@ -901,12 +1035,12 @@ def main(argv=None):
         write(f'articles/{meta["slug"]}/index.html', shell(meta['title'], meta['summary'], body, f'articles/{meta["slug"]}/', meta,
                                                            noindex=bool(meta.get('draft')), page='page article'))
         search.append({key: meta[key] for key in ('title', 'category', 'summary', 'updated')}
-                      | {'url': public_url(meta['slug']), 'sections': sections(html)})
+                      | {'authors': byline(meta, link=False), 'url': public_url(meta['slug']), 'sections': sections(html)})
 
     archive_meta = {
         'slug': 'minecraft-pcl-2026-10-05', 'title': '从 PCL 玩明白，到用 VS Code 写出第一个 Minecraft Java 模组（原文存档）',
         'summary': '保留原论坛的旧版 PCL 下载、安装操作和全部配图。在线安装步骤已有变化，请优先阅读当前修订版。',
-        'category': '历史存档', 'created': '2026-10-05', 'updated': '2026-10-22',
+        'category': '历史存档', 'created': '2026-10-05', 'updated': '2026-10-22', 'author_list': [owner],
     }
     html, toc = render((ROOT/'archive'/f'{archive_meta["slug"]}.md').read_text(encoding='utf-8'))
     write(f'archive/{archive_meta["slug"]}/index.html',
@@ -921,7 +1055,7 @@ def main(argv=None):
                               home_page(articles, index_url), page='page home', search_link=False))
     # 写作页列出全部文章（含草稿）：articles.json 本来就在公开仓库里。页面不让搜索引擎收录。
     write('write/index.html', shell('写作', '在浏览器里编辑 ByteLife 文章：左边 Markdown，右边实时预览。',
-                                    editor_page(validate_articles(json.loads((ROOT/'articles.json').read_text(encoding='utf-8')))),
+                                    editor_page(catalog, authors),
                                     'write/', noindex=True, page='page editor-page', csp=EDITOR_CSP,
                                     styles=('editor.css',), scripts=(VENDOR_MARKDOWN_IT, 'editor.js')))
 
@@ -932,23 +1066,37 @@ def main(argv=None):
                             f'<main id="main" class="single not-found"><h1>这一页没找到。</h1><p>文章可能换过地址。可以回首页搜索标题或正文里的关键词。</p>'
                             f'<p><a class="button button-primary" href="{BASE}#search">{icon("search")}去首页搜索</a></p></main>', '404.html', noindex=True))
 
+    # 作者分区页：只算已发表的文章；还没有发表文章的作者页不让搜索引擎收录。
+    for author in authors.values():
+        count = sum(author['id'] in author_ids(a) for a in published)
+        write(f'authors/{author["id"]}/index.html',
+              shell(f'{author["name"]} 的文章', author.get('bio') or f'{author["name"]} 在 ByteLife 写的文章。', author_page(author, articles),
+                    f'authors/{author["id"]}/', noindex=not count, page='page home'))
+    write('authors/index.html', shell('作者', 'ByteLife 的作者和各自的文章分区。', authors_index(authors, published), 'authors/',
+                                      noindex=not SITE_STATE['multi_author'], page='page home'))
+
     # 草稿不进站点地图和 RSS。
     latest = max(a['updated'] for a in published or articles)
     links = [(ORIGIN+BASE, latest)]+[(ORIGIN+public_url(a['slug']), a['updated']) for a in published]
+    links += [(ORIGIN+author_url(aid), max(a['updated'] for a in published if aid in author_ids(a)))
+              for aid in authors if any(aid in author_ids(a) for a in published)]
+    if SITE_STATE['multi_author']:
+        links.append((ORIGIN+BASE+'authors/', latest))
     write('sitemap.xml', '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
           + ''.join(f'<url><loc>{url}</loc><lastmod>{updated}</lastmod></url>' for url, updated in links)+'</urlset>')
     write('robots.txt', f'User-agent: *\nAllow: /\nSitemap: {ORIGIN}{BASE}sitemap.xml\n')
     china = timezone(timedelta(hours=8))
-    rss = '<?xml version="1.0" encoding="UTF-8"?><rss version="2.0"><channel><title>ByteLife</title><link>'+ORIGIN+BASE+'</link><description>Milo 的学习与生活记录</description>'
+    rss = '<?xml version="1.0" encoding="UTF-8"?><rss version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>ByteLife</title><link>'+ORIGIN+BASE+'</link><description>Milo 的学习与生活记录</description>'
     for a in published:
         url = ORIGIN+public_url(a['slug'])
         pub_date = format_datetime(datetime.fromisoformat(a['created']).replace(tzinfo=china))
         rss += ('<item><title>'+xml_escape(a['title'])+'</title><link>'+url+'</link><guid>'+url+'</guid><pubDate>'+pub_date
-                + '</pubDate><description>'+xml_escape(a['summary'])+'</description></item>')
+                + '</pubDate>'+''.join('<dc:creator>'+xml_escape(x['name'])+'</dc:creator>' for x in a['author_list'])
+                + '<description>'+xml_escape(a['summary'])+'</description></item>')
     write('feed.xml', rss+'</channel></rss>')
     write('.nojekyll', '')
 
-    unlisted = sorted({p.stem for p in CONTENT.glob('*.md')}-{a['slug'] for a in validate_articles(json.loads((ROOT/'articles.json').read_text(encoding='utf-8')))})
+    unlisted = sorted({p.stem for p in CONTENT.glob('*.md')}-{a['slug'] for a in catalog})
     if unlisted:
         print('未列入 articles.json、本次不发布：'+'、'.join(unlisted))
     if drafts and options.drafts:

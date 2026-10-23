@@ -103,6 +103,8 @@ def page_rules(path, page, errors):
             if digest not in page.csp:
                 errors.append(f'{name}: 内联脚本的哈希不在 CSP 里')
     archived = name.startswith(('archive/', 'write/')) or name == '404.html'
+    if name.startswith('authors/'):
+        return   # 作者页：只有一位作者或还没发表文章时不让收录，其余正常收录
     if archived and 'noindex' not in page.robots:
         errors.append(f'{name}: 存档页、写作页和 404 应设置 noindex')
     if not archived and 'noindex' in page.robots:

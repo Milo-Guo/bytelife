@@ -25,6 +25,10 @@ body.editor-page { height: 100vh; height: 100dvh; overflow: hidden; }
 .ed-meta .check, .ed-check { flex-direction: row; align-items: center; gap: 8px; color: var(--ink); font-size: 14px; }
 .ed-meta .check { align-self: end; min-height: 40px; }
 .ed-meta:not([data-type="recipe"]) .recipe-only { display: none; }
+.ed-authors { display: flex; flex-wrap: wrap; align-content: start; gap: 2px 14px; min-width: 0; margin: 0; padding: 0; border: 0; }
+.ed-authors legend { float: left; width: 100%; margin-bottom: 2px; padding: 0; color: var(--muted); font-size: 13px; }
+.ed-authors .check { min-height: 32px; }
+.ed-form .ed-authors .check { flex-direction: row; align-items: center; gap: 8px; color: var(--ink); font-size: 14px; }
 
 .ed-tabs { display: none; }
 .ed-panes { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); min-height: 0; }
