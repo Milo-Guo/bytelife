@@ -219,6 +219,38 @@ class TypeTest(unittest.TestCase):
         self.assertEqual(build.recipe_facts({'type': 'tutorial', 'recipe': {'minutes': 20}}), [])
 
 
+class HomeToolsTest(unittest.TestCase):
+    def test_home_note_optional_and_invalid_values_rejected(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self.assertEqual(build.read_home_note(root), '')
+            for value in [[], {'now': 123}, {'now': '字' * 201}]:
+                (root/'home.json').write_text(json.dumps(value), encoding='utf-8')
+                with self.subTest(value=type(value).__name__), self.assertRaises(SystemExit):
+                    build.read_home_note(root)
+            (root/'home.json').write_text('{broken', encoding='utf-8')
+            with self.assertRaises(SystemExit):
+                build.read_home_note(root)
+            (root/'home.json').write_text('{"now":"  继续整理笔记  "}', encoding='utf-8')
+            self.assertEqual(build.read_home_note(root), '继续整理笔记')
+
+    def test_home_note_cannot_inject_html(self):
+        meta = {'slug': 'hello', 'title': '标题', 'category': '编程', 'summary': '摘要',
+                'created': '2026-10-25', 'updated': '2026-10-25', 'author': 'milo', 'author_list': [AUTHORS['milo']]}
+        html = build.home_page([meta], '/bytelife/search-index.json', '<script>alert(1)</script>')
+        self.assertNotIn('<script>', html)
+        self.assertIn('&lt;script&gt;alert(1)&lt;/script&gt;', html)
+        self.assertNotIn('home-now', build.home_page([meta], '/bytelife/search-index.json'))
+
+    def test_bookmark_title_cannot_break_attributes(self):
+        title = '" onmouseover="alert(1) <img src=x>'
+        html = build.bookmark_button('hello', title)
+        page = parse(html)
+        self.assertFalse(any(name.startswith('on') for _, name, _ in page.attrs))
+        self.assertNotIn('img', page.tags)
+        self.assertIn(('button', 'data-article-title', title), page.attrs)
+
+
 class NewArticleTest(unittest.TestCase):
     ORIGINAL = ('[\r\n  {\r\n    "slug": "old-post",\r\n    "title": "旧文",\r\n    "category": "编程",\r\n    "type": "tutorial",\r\n    "author": "milo",\r\n'
                 '    "summary": "摘要",\r\n    "created": "2026-10-01",\r\n    "updated": "2026-10-01"\r\n  }\r\n]\r\n')

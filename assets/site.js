@@ -82,6 +82,107 @@
   addEventListener('storage', event => { if (event.key === THEME_KEY) applyTheme(storedTheme()); });
   syncTheme();
 
+  /* ---------- 收藏与阅读位置：只保存在当前浏览器 ---------- */
+  const BOOKMARK_KEY = 'bytelife-bookmarks-v1';
+  const READING_KEY = 'bytelife-reading-v1';
+  const validSlug = value => typeof value === 'string' && /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(value) && value.length <= 120;
+  function readLocal(key) {
+    try { return JSON.parse(localStorage.getItem(key)); } catch { return null; }
+  }
+  function writeLocal(key, value) {
+    try { localStorage.setItem(key, JSON.stringify(value)); return true; } catch { return false; }
+  }
+  function readBookmarks() {
+    const value = readLocal(BOOKMARK_KEY);
+    return new Set(Array.isArray(value) ? value.filter(validSlug).slice(0, 500) : []);
+  }
+  let bookmarks = readBookmarks();
+  const homeSlugs = new Set([...document.querySelectorAll('#article-list .entry[data-slug]')].map(node => node.dataset.slug));
+
+  function syncBookmarks() {
+    for (const button of document.querySelectorAll('[data-bookmark]')) {
+      const saved = bookmarks.has(button.dataset.bookmark);
+      button.hidden = false;
+      button.setAttribute('aria-pressed', String(saved));
+      button.setAttribute('aria-label', `${saved ? '取消收藏' : '收藏'}：${button.dataset.articleTitle}`);
+      button.title = saved ? '取消收藏' : '收藏文章';
+      const label = button.querySelector('.bookmark-label');
+      if (label) label.textContent = saved ? '已收藏' : '收藏文章';
+    }
+    for (const count of document.querySelectorAll('[data-saved-count]')) count.textContent = [...bookmarks].filter(slug => homeSlugs.has(slug)).length;
+  }
+
+  function makeBookmark(slug, title) {
+    const button = el('button', 'bookmark-button');
+    button.type = 'button';
+    button.dataset.bookmark = slug;
+    button.dataset.articleTitle = title;
+    button.append(icon('bookmark'), el('span', 'bookmark-label', '收藏文章'));
+    return button;
+  }
+
+  document.addEventListener('click', event => {
+    const button = event.target.closest?.('[data-bookmark]');
+    if (!button || !validSlug(button.dataset.bookmark)) return;
+    const slug = button.dataset.bookmark;
+    if (bookmarks.has(slug)) bookmarks.delete(slug); else bookmarks.add(slug);
+    const persisted = writeLocal(BOOKMARK_KEY, [...bookmarks]);
+    syncBookmarks();
+    document.dispatchEvent(new Event('bytelife-bookmarks-change'));
+    announce(persisted ? (bookmarks.has(slug) ? '已收藏文章' : '已取消收藏') : '本页已更新，浏览器未允许保存，刷新后不会保留。');
+  });
+  syncBookmarks();
+
+  function syncResume() {
+    const link = document.getElementById('resume-link');
+    if (!link) return;
+    const record = readLocal(READING_KEY);
+    const valid = record && validSlug(record.slug) && homeSlugs.has(record.slug) && typeof record.title === 'string';
+    link.hidden = !valid;
+    document.getElementById('resume-empty').hidden = Boolean(valid);
+    if (!valid) return;
+    const progress = Number.isFinite(record.progress) ? Math.max(0, Math.min(100, record.progress)) : 0;
+    const anchor = typeof record.anchor === 'string' && record.anchor.length < 300 ? record.anchor : '';
+    // 地址由受限的文章标识生成，不使用存储中可能被修改的完整 URL。
+    link.href = `${base}articles/${record.slug}/${anchor ? `#${encodeURIComponent(anchor)}` : ''}`;
+    document.getElementById('resume-name').textContent = record.title.slice(0, 300);
+    document.getElementById('resume-meta').textContent = progress >= 100 ? '已经读完 · 回顾一下' : `已读 ${progress}% · 接着读`;
+    document.getElementById('resume-progress').value = progress;
+  }
+  syncResume();
+  addEventListener('storage', event => {
+    if (event.key === BOOKMARK_KEY || event.key === null) {
+      bookmarks = readBookmarks();
+      syncBookmarks();
+      document.dispatchEvent(new Event('bytelife-bookmarks-change'));
+    }
+    if (event.key === READING_KEY || event.key === null) syncResume();
+  });
+  addEventListener('pageshow', syncResume);
+
+  const readingMain = document.querySelector('[data-reading-slug]');
+  if (readingMain && validSlug(readingMain.dataset.readingSlug)) {
+    const headings = [...readingMain.querySelectorAll('.prose h2[id], .prose h3[id]')];
+    let readingTimer;
+    function savePosition() {
+      let anchor = '';
+      for (const heading of headings) {
+        if (heading.getBoundingClientRect().top > 110) break;
+        anchor = heading.id;
+      }
+      const prose = readingMain.querySelector('.prose');
+      const start = prose.getBoundingClientRect().top + scrollY;
+      const length = Math.max(1, prose.offsetHeight - innerHeight);
+      writeLocal(READING_KEY, {
+        slug: readingMain.dataset.readingSlug, title: readingMain.querySelector('h1').textContent,
+        anchor, progress: Math.round(Math.max(0, Math.min(1, (scrollY - start) / length)) * 100),
+      });
+    }
+    addEventListener('scroll', () => { clearTimeout(readingTimer); readingTimer = setTimeout(savePosition, 300); }, { passive: true });
+    addEventListener('pagehide', savePosition);
+    addEventListener('load', () => requestAnimationFrame(savePosition), { once: true });
+  }
+
   /* ---------- 首页搜索 ---------- */
   const searchInput = document.getElementById('search-input');
   if (searchInput) setupSearch(searchInput);
@@ -96,10 +197,13 @@
     const ALL = chips[0].dataset.category;
     const entries = [...list.children];
     const staticData = entries.map(li => ({
-      li, category: li.dataset.category,
+      li, slug: li.dataset.slug, category: li.dataset.category,
       text: `${li.querySelector('.entry-title').textContent} ${li.querySelector('.entry-summary').textContent}`.toLowerCase(),
     }));
     let category = ALL;
+    let savedOnly = new URLSearchParams(location.search).get('view') === 'saved';
+    const viewButtons = [...document.querySelectorAll('[data-library-view]')];
+    const inView = slug => !savedOnly || bookmarks.has(slug);
     let index = null;
     let loading = null;
     let timer = 0;
@@ -194,6 +298,7 @@
         link.href = a.url;
         link.append(highlight(a.title, pattern));
         title.append(link);
+        meta.append(makeBookmark(a.slug, a.title));
         item.append(meta, title);
         if (hits.length) {
           const places = el('ul', 'hits');
@@ -219,6 +324,7 @@
         fragment.append(item);
       }
       list.replaceChildren(fragment);
+      syncBookmarks();
     }
 
     function setStatus(text) { if (status.textContent !== text) status.textContent = text; }
@@ -249,14 +355,16 @@
     function showAll() {
       list.replaceChildren(...entries);
       let shown = 0;
-      for (const { li, category: c } of staticData) {
-        li.hidden = category !== ALL && c !== category;
+      for (const { li, slug, category: c } of staticData) {
+        li.hidden = !inView(slug) || (category !== ALL && c !== category);
         if (!li.hidden) shown++;
       }
       updateChips(null);
       library.classList.remove('is-searching');
       hideNotice();
-      setStatus(category === ALL ? '' : `${category} · ${shown} 篇`);
+      setStatus(savedOnly ? `我的收藏 · ${shown} 篇` : (category === ALL ? '' : `${category} · ${shown} 篇`));
+      if (savedOnly && !shown) showNotice('empty', category === ALL ? '还没有收藏文章。点文章旁的收藏按钮，以后就能在这里找到。' : '这个分类还没有收藏，试试其他分类。');
+      syncBookmarks();
     }
 
     // 索引没载入时退回到标题和摘要匹配，至少能找到文章；“重新载入”成功后恢复全文结果。
@@ -264,8 +372,8 @@
       list.replaceChildren(...entries);
       const counts = new Map([[ALL, 0]]);
       let shown = 0;
-      for (const { li, category: c, text } of staticData) {
-        const match = words.every(w => text.includes(w));
+      for (const { li, slug, category: c, text } of staticData) {
+        const match = inView(slug) && words.every(w => text.includes(w));
         if (match) { counts.set(ALL, counts.get(ALL) + 1); counts.set(c, (counts.get(c) || 0) + 1); }
         li.hidden = !match || (category !== ALL && c !== category);
         if (!li.hidden) shown++;
@@ -278,7 +386,7 @@
     }
 
     function showResults(words, query) {
-      const all = search(words);
+      const all = search(words).filter(result => inView(result.a.slug));
       const counts = new Map([[ALL, all.length]]);
       for (const r of all) counts.set(r.a.category, (counts.get(r.a.category) || 0) + 1);
       updateChips(counts);
@@ -305,6 +413,7 @@
       const url = new URL(location.href);
       if (query) url.searchParams.set('q', query); else url.searchParams.delete('q');
       if (category !== ALL) url.searchParams.set('c', category); else url.searchParams.delete('c');
+      if (savedOnly) url.searchParams.set('view', 'saved'); else url.searchParams.delete('view');
       if (url.href !== location.href) history.replaceState(history.state, '', url);
     }
 
@@ -360,6 +469,29 @@
     });
     clear.addEventListener('click', clearSearch);
     for (const chip of chips) chip.addEventListener('click', () => setCategory(chip.dataset.category));
+    function syncViews() {
+      for (const button of viewButtons) {
+        const active = (button.dataset.libraryView === 'saved') === savedOnly;
+        button.classList.toggle('is-active', active);
+        button.setAttribute('aria-pressed', String(active));
+      }
+    }
+    for (const button of viewButtons) button.addEventListener('click', () => {
+      savedOnly = button.dataset.libraryView === 'saved';
+      syncViews();
+      run();
+    });
+    document.addEventListener('bytelife-bookmarks-change', () => {
+      if (!savedOnly) return;
+      const focused = document.activeElement;
+      run().then(() => {
+        // 取消收藏会移走当前结果，把焦点交给下一篇，列表空了就回到收藏入口。
+        if (focused?.matches('[data-bookmark]') && (!focused.isConnected || focused.closest('[hidden]'))) {
+          (list.querySelector('.entry:not([hidden]) [data-bookmark]') || viewButtons.find(button => button.dataset.libraryView === 'saved'))?.focus();
+        }
+      });
+    });
+    syncViews();
     document.addEventListener('keydown', event => {
       if (event.key !== '/' || event.ctrlKey || event.metaKey || event.altKey || event.defaultPrevented) return;
       if (event.target.closest?.('input, textarea, select, [contenteditable]')) return;
@@ -372,7 +504,7 @@
     const initial = params.get('c');
     input.value = (params.get('q') || '').slice(0, 100);
     if (initial && chips.some(chip => chip.dataset.category === initial)) setCategory(initial);
-    else if (input.value) run();
+    else if (input.value || savedOnly) run();
     if (location.hash === '#search') input.focus();
   }
 

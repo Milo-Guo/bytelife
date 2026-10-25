@@ -55,7 +55,7 @@ CSP = '; '.join([
 EDITOR_CSP = (CSP.replace("connect-src 'self'", "connect-src 'self' https://api.github.com")
               .replace("trusted-types 'none'", "trusted-types bytelife-preview"))
 THEME_COLORS = {'light': '#f7f6f3', 'dark': '#131416'}
-ASSET_URLS = {name: BASE+'assets/'+name for name in ('site.css', 'site.js', 'editor.css', 'editor.js')}
+ASSET_URLS = {name: BASE+'assets/'+name for name in ('site.css', 'site.js', 'home.js', 'editor.css', 'editor.js')}
 VENDOR_MARKDOWN_IT = 'vendor/markdown-it-14.3.3.min.js'
 # 写作页预览用的 markdown-it 前端版，取自 npm 官方包，文件哈希写在这里，check.py 会核对。
 VENDOR_HASHES = {VENDOR_MARKDOWN_IT: '494ba53db1aac9f676317dda7062bd9545b5f0bbe3f12b0ab1ab4f813825cfb0'}
@@ -632,6 +632,9 @@ ICONS = {
     'list': '<path d="M4 6.5h16M4 12h16M4 17.5h10"/>',
     'close': '<path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/>',
     'expand': '<path d="M14 4.5h5.5V10M10 19.5H4.5V14M19.5 4.5 14 10M4.5 19.5 10 14"/>',
+    'bookmark': '<path d="M6 4.5h12v16l-6-4-6 4Z"/>',
+    'clock': '<circle cx="12" cy="12" r="8"/><path d="M12 7v5l3 2"/>',
+    'code': '<path d="m8 6-6 6 6 6M16 6l6 6-6 6M14 3l-4 18"/>',
 }
 SPRITE = ('<svg xmlns="http://www.w3.org/2000/svg" class="sprite" aria-hidden="true">'
           + ''.join(f'<symbol id="i-{name}" viewBox="0 0 24 24">{path}</symbol>' for name, path in ICONS.items())+'</svg>')
@@ -796,12 +799,13 @@ def article_page(meta, html, toc, archive=None, revs=()):
 <p class="toc-title">目录</p>
 <div class="toc-scroll">{toc_html(toc)}</div>
 </nav>
-<main id="main" class="article-main">
+<main id="main" class="article-main"{f' data-reading-slug="{slug}"' if not archive else ''}>
 <header class="article-header">
 <div class="article-kicker">{kicker}</div>
 <h1>{escape(meta['title'])}</h1>
 <p class="article-summary">{escape(meta['summary'])}</p>
 <p class="article-meta"><span class="byline">{byline(meta)}</span><span>发布 <time datetime="{meta['created']}">{meta['created']}</time></span><span>更新 <time datetime="{meta['updated']}">{meta['updated']}</time></span>{facts}{history}</p>
+{bookmark_button(slug, meta['title'], label=True) if not archive else ''}
 {notice}
 </header>
 <div class="reading-bar"><button class="toc-toggle" type="button" aria-expanded="false" aria-controls="toc">{icon('list')}<span class="reading-current">目录</span>{icon('chevron')}</button></div>
@@ -818,6 +822,12 @@ def article_page(meta, html, toc, archive=None, revs=()):
 </div>'''
 
 
+def bookmark_button(slug, title, label=False):
+    return (f'<button class="bookmark-button{" bookmark-labeled" if label else ""}" type="button" '
+            f'data-bookmark="{escape(slug)}" data-article-title="{escape(title)}" aria-pressed="false" '
+            f'aria-label="收藏：{escape(title)}" hidden>{icon("bookmark")}<span class="bookmark-label">收藏文章</span></button>')
+
+
 def entry_html(meta, show_author=False):
     url = public_url(meta['slug'])
     note = ''
@@ -826,11 +836,11 @@ def entry_html(meta, show_author=False):
         note = (f'<p class="entry-note"><a href="{url}#{quote(n["anchor"])}"><span class="note-tag">{escape(n["date"])} 更新</span>'
                 f'<span class="note-text">{escape(n["text"])}</span>{icon("arrow-right")}</a></p>')
     facts = ''.join(f'<span>{fact}</span>' for fact in recipe_facts(meta))
-    return (f'<li class="entry" data-category="{escape(meta["category"])}">'
+    return (f'<li class="entry" data-slug="{escape(meta["slug"])}" data-category="{escape(meta["category"])}">'
             f'<p class="entry-meta"><span class="entry-cat">{escape(meta["category"])}</span>'
             f'{f"<span class=entry-author>{byline(meta, link=False)}</span>" if show_author else ""}'
             f'<span>更新 <time datetime="{meta["updated"]}">{meta["updated"]}</time></span>{facts}'
-            f'{DRAFT_BADGE if meta.get("draft") else ""}</p>'
+            f'{DRAFT_BADGE if meta.get("draft") else ""}{bookmark_button(meta["slug"], meta["title"])}</p>'
             f'<h3 class="entry-title"><a href="{url}">{escape(meta["title"])}</a></h3>'
             f'<p class="entry-summary">{escape(meta["summary"])}</p>{note}</li>')
 
@@ -918,7 +928,39 @@ def authors_index(authors, articles):
 </main>'''
 
 
-def home_page(articles, index_url):
+def read_home_note(root=ROOT):
+    path = root/'home.json'
+    if not path.exists():
+        return ''
+    try:
+        data = json.loads(path.read_text(encoding='utf-8'))
+    except (ValueError, OSError) as error:
+        raise BuildError('home.json：无法读取首页动态，请检查 JSON 格式') from error
+    if not isinstance(data, dict) or not isinstance(data.get('now', ''), str) or len(data.get('now', '')) > 200:
+        raise BuildError('home.json：now 应是 200 字以内的文字，留空则隐藏')
+    return data.get('now', '').strip()
+
+
+def utility_dialog():
+    return f'''<dialog id="utility-dialog" class="utility-dialog" aria-labelledby="utility-title">
+<div class="utility-head"><h2 id="utility-title">常用工具</h2><button class="icon-button" type="button" data-close-tool aria-label="关闭工具">{icon('close')}</button></div>
+<section id="json-tool" class="utility-panel" hidden>
+<label for="json-input">JSON 内容</label><textarea id="json-input" spellcheck="false" placeholder="粘贴 JSON 内容"></textarea>
+<div class="utility-actions"><button class="button button-primary" type="button" data-json-action="format">格式化</button><button class="button" type="button" data-json-action="minify">压缩</button><button class="button" type="button" data-copy-json>复制结果</button></div>
+<label for="json-output">处理结果</label><textarea id="json-output" spellcheck="false" readonly></textarea>
+</section>
+<section id="timestamp-tool" class="utility-panel" hidden>
+<label for="unix-input">Unix 时间戳（秒或毫秒）</label><input id="unix-input" type="text" inputmode="numeric" placeholder="输入 10 位或 13 位时间戳">
+<button class="button" type="button" data-convert-unix>转换为日期</button>
+<label for="date-input">日期与时间（当前设备时区）</label><input id="date-input" type="datetime-local" step="1">
+<button class="button" type="button" data-convert-date>转换为时间戳</button>
+<output id="timestamp-output"></output>
+</section>
+<p id="utility-status" class="utility-status" role="status"></p><p class="utility-hint">内容只在当前浏览器中处理。</p>
+</dialog>'''
+
+
+def home_page(articles, index_url, now=''):
     categories = list(dict.fromkeys(a['category'] for a in articles))
     counts = [(ALL, len(articles))]+[(c, sum(a['category'] == c for a in articles)) for c in categories]
     chips = ''.join(
@@ -929,11 +971,25 @@ def home_page(articles, index_url):
     multi = SITE_STATE['multi_author']
     count = len({i for a in articles for i in author_ids(a)})
     writers = f' · <a class="meta-link" href="{BASE}authors/">{count} 位作者</a>' if multi else ''
-    return f'''<main id="main" class="home-main">
+    recent = ''.join(f'<li><time datetime="{a["updated"]}">{a["updated"]}</time><a href="{public_url(a["slug"])}">{escape(a["title"])}</a></li>'
+                     for a in sorted(articles, key=lambda a: a['updated'], reverse=True)[:3])
+    note = f'<p class="home-now"><span>正在折腾</span>{escape(now)}</p>' if now else ''
+    return f'''<main id="main" class="home-main home-workspace">
+<aside class="home-rail" aria-label="首页工具">
+<details class="home-toolbox" open><summary>阅读与工具{icon('chevron')}</summary><div class="home-toolbox-body">
+<nav class="rail-nav js-only" aria-label="文章视图"><button class="rail-button is-active" type="button" data-library-view="all" aria-pressed="true">{icon('list')}全部文章<span>{len(articles)}</span></button><button class="rail-button" type="button" data-library-view="saved" aria-pressed="false">{icon('bookmark')}我的收藏<span data-saved-count>0</span></button></nav>
+<section class="rail-section js-only" aria-labelledby="resume-title"><h2 id="resume-title">继续阅读</h2><p class="rail-empty" id="resume-empty">读过文章后，这里会记住你的位置。</p><a class="resume-link" id="resume-link" hidden><span id="resume-name"></span><span class="resume-meta" id="resume-meta"></span><progress id="resume-progress" max="100" value="0" aria-label="上次阅读进度"></progress></a></section>
+<section class="rail-section" aria-labelledby="tools-title"><h2 id="tools-title">常用工具</h2><button class="rail-button js-only" type="button" data-open-tool="json">{icon('code')}JSON 格式化</button><button class="rail-button js-only" type="button" data-open-tool="timestamp">{icon('clock')}时间戳转换</button><a class="rail-button" href="{BASE}articles/git-basics/#git-commands-a">{icon('list')}Git 命令速查{icon('arrow-right')}</a></section>
+<section class="rail-section" aria-labelledby="recent-title"><h2 id="recent-title">最近更新</h2><ol class="rail-recent">{recent}</ol></section>
+<a class="rail-feedback" href="{REPO}/discussions">提问与反馈{icon('external')}</a>
+</div></details>
+</aside>
+<div class="home-content">
 <section class="intro" aria-labelledby="intro-title">
 <h1 id="intro-title">Milo 的笔记</h1>
 <p>记录我学编程、修电脑时遇到的问题和解决过程，以后也写做菜和生活。</p>
 <p class="intro-meta">{len(articles)} 篇文章{writers} · 最近更新 <time datetime="{latest}">{latest}</time></p>
+{note}
 </section>
 <section id="library" class="library" aria-labelledby="library-title">
 <h2 id="library-title" class="visually-hidden">全部文章</h2>
@@ -948,7 +1004,8 @@ def home_page(articles, index_url):
 <div id="search-notice" class="search-notice" hidden></div>
 <ol id="article-list" class="entries" data-index="{index_url}" data-multi-author="{str(multi).lower()}">{''.join(entry_html(a, multi) for a in articles)}</ol>
 </section>
-</main>'''
+</div>
+</main>{utility_dialog()}'''
 
 
 # ---------- 输出 ----------
@@ -997,7 +1054,7 @@ def copy_assets():
     for name, expected in VENDOR_HASHES.items():
         if sha256((source/name).read_bytes()).hexdigest() != expected:
             raise BuildError(f'assets/{name} 和记录的哈希不一致，可能被改动过；请从 npm 官方包重新取得')
-    for name in ('site.css', 'site.js', 'editor.css', 'editor.js', VENDOR_MARKDOWN_IT):
+    for name in ('site.css', 'site.js', 'home.js', 'editor.css', 'editor.js', VENDOR_MARKDOWN_IT):
         digest = sha256((source/name).read_bytes()).hexdigest()[:10]
         ASSET_URLS[name] = f'{BASE}assets/{name}?v={digest}'
     return skipped
@@ -1034,7 +1091,7 @@ def main(argv=None):
         body = article_page(meta, html, toc, revs=revisions(f'content/{meta["slug"]}.md'))
         write(f'articles/{meta["slug"]}/index.html', shell(meta['title'], meta['summary'], body, f'articles/{meta["slug"]}/', meta,
                                                            noindex=bool(meta.get('draft')), page='page article'))
-        search.append({key: meta[key] for key in ('title', 'category', 'summary', 'updated')}
+        search.append({key: meta[key] for key in ('slug', 'title', 'category', 'summary', 'updated')}
                       | {'authors': byline(meta, link=False), 'url': public_url(meta['slug']), 'sections': sections(html)})
 
     archive_meta = {
@@ -1052,7 +1109,7 @@ def main(argv=None):
     index_url = f'{BASE}search-index.json?v={sha256(index.encode()).hexdigest()[:10]}'
     write('search-index.json', index)
     write('index.html', shell('Milo 的笔记', 'Milo Guo 的学习与生活笔记：Git 入门、Minecraft Java 模组开发、Windows 问题排查，步骤和原因一起写清楚。',
-                              home_page(articles, index_url), page='page home', search_link=False))
+                              home_page(articles, index_url, read_home_note()), page='page home', search_link=False, scripts=('home.js',)))
     # 写作页列出全部文章（含草稿）：articles.json 本来就在公开仓库里。页面不让搜索引擎收录。
     write('write/index.html', shell('写作', '在浏览器里编辑 ByteLife 文章：左边 Markdown，右边实时预览。',
                                     editor_page(catalog, authors),

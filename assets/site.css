@@ -153,6 +153,62 @@ html:not(.js) .theme-toggle, html:not(.js) .search-key { display: none; }
 .intro p { margin: 0; color: var(--ink-2); font-size: 16px; line-height: 1.8; }
 .intro .intro-meta { margin-top: 10px; color: var(--muted); font-size: 13px; }
 
+/* 首页左侧提供阅读工具，文章列始终只排一篇；侧栏和正文共用现有主题。 */
+.home-workspace { display: grid; grid-template-columns: 232px minmax(0, 1fr); gap: 28px; align-items: start; }
+.home-content { min-width: 0; }
+.home-rail { position: sticky; top: 24px; max-height: calc(100dvh - 48px); overflow-y: auto; padding: 0 20px 8px 0; border-right: 1px solid var(--line); scrollbar-width: thin; }
+.home-toolbox > summary { display: none; }
+.home-toolbox-body { min-width: 0; }
+.rail-nav { display: grid; gap: 4px; margin-bottom: 24px; }
+.rail-button { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 42px; padding: 9px 10px; border: 0; border-radius: 8px; background: none; color: var(--ink-2); font-size: 14px; line-height: 1.5; text-align: left; overflow-wrap: anywhere; }
+.rail-button > span, .rail-button > .icon:last-child:not(:first-child) { margin-left: auto; }
+.rail-button > span { color: var(--muted); font: 12px var(--mono); }
+.rail-button:hover { background: var(--hover); color: var(--ink); }
+.rail-button.is-active { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+.rail-section + .rail-section { margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--line); }
+.rail-section h2 { margin: 0 0 10px; color: var(--muted); font-size: 12px; font-weight: 600; }
+.rail-empty { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.8; }
+.resume-link { display: grid; gap: 8px; font-size: 14px; line-height: 1.7; overflow-wrap: anywhere; }
+.resume-link:hover { color: var(--accent); }
+.resume-meta { color: var(--muted); font-size: 12px; }
+.resume-link progress { display: block; width: 100%; height: 4px; border: 0; border-radius: 4px; overflow: hidden; background: var(--surface-2); accent-color: var(--accent); }
+.resume-link progress::-webkit-progress-bar { background: var(--surface-2); }
+.resume-link progress::-webkit-progress-value { background: var(--accent); }
+.resume-link progress::-moz-progress-bar { background: var(--accent); }
+.rail-recent { display: grid; gap: 14px; margin: 0; padding: 0; list-style: none; }
+.rail-recent time { display: block; margin-bottom: 3px; color: var(--muted); font: 11px/1.6 var(--mono); }
+.rail-recent a { display: -webkit-box; overflow: hidden; -webkit-line-clamp: 2; -webkit-box-orient: vertical; color: var(--ink-2); font-size: 13px; line-height: 1.7; }
+.rail-recent a:hover { color: var(--accent); }
+.rail-feedback { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 44px; margin-top: 22px; border-top: 1px solid var(--line); color: var(--muted); font-size: 13px; }
+.rail-feedback:hover { color: var(--accent); }
+.intro .home-now { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 10px; margin-top: 16px; color: var(--ink-2); font-size: 13px; }
+.home-now > span { color: var(--accent); font-weight: 600; }
+html:not(.js) .js-only { display: none !important; }
+
+.bookmark-button { position: relative; z-index: 2; display: inline-flex; align-items: center; justify-content: center; gap: 7px; flex: none; min-width: 32px; height: 32px; margin-left: auto; padding: 4px 8px; border: 0; border-radius: 8px; background: transparent; color: var(--muted); }
+.bookmark-button:hover { background: var(--hover); color: var(--ink); }
+.bookmark-button[aria-pressed="true"] { color: var(--accent); background: var(--accent-soft); }
+.bookmark-button[aria-pressed="true"] .icon { fill: currentColor; }
+.bookmark-label { display: none; }
+.bookmark-labeled { margin: 16px 0 0; padding-inline: 12px; font-size: 13px; }
+.bookmark-labeled .bookmark-label { display: inline; }
+
+/* 工具使用原生对话框，键盘焦点和 Esc 关闭由浏览器处理。 */
+.utility-dialog { width: min(760px, calc(100% - 32px)); max-height: calc(100dvh - 32px); padding: 0; overflow: auto; border: 1px solid var(--line); border-radius: 16px; background: var(--surface); color: var(--ink); box-shadow: var(--shadow); }
+.utility-dialog::backdrop { background: var(--overlay); }
+.utility-head { position: sticky; top: 0; z-index: 1; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 20px; border-bottom: 1px solid var(--line); background: var(--surface); }
+.utility-head h2 { margin: 0; font-size: 18px; }
+.utility-panel { display: grid; justify-items: start; gap: 12px; padding: 20px 20px 0; }
+.utility-panel label { font-size: 14px; color: var(--ink-2); }
+.utility-panel textarea, .utility-panel input { display: block; width: 100%; min-width: 0; padding: 10px 12px; border: 1px solid var(--line-strong); border-radius: 8px; background: var(--bg); color: var(--ink); font: 14px/1.7 var(--mono); }
+.utility-panel textarea { min-height: 140px; height: 20vh; resize: vertical; tab-size: 2; }
+.utility-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.utility-panel output { display: block; width: 100%; padding: 12px; border-radius: 8px; background: var(--surface-2); font: 14px/1.8 var(--mono); white-space: pre-wrap; overflow-wrap: anywhere; }
+.utility-panel output:empty { display: none; }
+.utility-status { margin: 14px 20px 0; color: var(--accent); font-size: 13px; overflow-wrap: anywhere; }
+.utility-status:empty { display: none; }
+.utility-hint { margin: 14px 20px 20px; color: var(--muted); font-size: 12px; }
+
 .library { margin-top: 28px; }
 .search {
   position: relative; display: flex; align-items: center; gap: 10px; height: 50px; padding: 0 8px 0 16px;
@@ -475,6 +531,21 @@ html:has(dialog.lightbox[open]) { overflow: hidden; }
 ::view-transition-old(root), ::view-transition-new(root) { animation-duration: 180ms; animation-timing-function: var(--ease); }
 
 /* ---------- 宽度适配 ---------- */
+@media (min-width: 768px) and (max-width: 1100px) {
+  .home-workspace { grid-template-columns: 208px minmax(0, 1fr); gap: 20px; }
+  .home-rail { padding-right: 16px; }
+}
+@media (width < 768px) {
+  .home-workspace { display: flex; flex-direction: column; gap: 20px; padding-top: 12px; }
+  .home-rail { position: static; width: 100%; max-height: none; padding: 0; border: 0; border-bottom: 1px solid var(--line); overflow: visible; }
+  .home-content { width: 100%; }
+  .home-toolbox > summary { display: flex; align-items: center; justify-content: space-between; min-height: 44px; cursor: pointer; list-style: none; font-size: 14px; font-weight: 600; }
+  .home-toolbox > summary::-webkit-details-marker { display: none; }
+  .home-toolbox[open] > summary .icon { transform: rotate(180deg); }
+  .home-toolbox-body { padding: 12px 0 16px; }
+  .rail-nav { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .rail-button { min-height: 44px; }
+}
 @media (min-width: 960px) {
   /* 宽屏使用紧凑的整行列表，标题和摘要共用左边线，不再给元信息单独留一栏。 */
   .entries { gap: 0; margin-top: 6px; }
@@ -528,6 +599,10 @@ html:has(dialog.lightbox[open]) { overflow: hidden; }
   .search { height: 48px; }
   .search-clear { width: 40px; height: 40px; }
   .search-key { display: none; }
+  .bookmark-button { min-width: 44px; height: 44px; }
+  .entry-meta { column-gap: 8px; }
+  .utility-panel textarea, .utility-panel input { font-size: 16px; }
+  .utility-dialog .icon-button { width: 44px; height: 44px; }
   .chips { flex-wrap: nowrap; gap: 0 22px; overflow-x: auto; margin: 12px calc(-1 * var(--gutter)) 0; padding: 0 var(--gutter); scrollbar-width: none; }
   .chips::-webkit-scrollbar { display: none; }
   .chip { flex: none; height: 44px; }
