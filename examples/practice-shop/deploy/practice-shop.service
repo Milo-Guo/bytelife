@@ -1,0 +1,18 @@
+# 示例使用 Ubuntu 云主机默认的 ubuntu 用户；账户不同请修改下面三处路径与 User。
+[Unit]
+Description=Practice Shop API
+After=network.target
+
+[Service]
+Type=simple
+User=ubuntu
+WorkingDirectory=/home/ubuntu/practice-shop
+ExecStart=/home/ubuntu/practice-shop/.venv/bin/python -m uvicorn app.main:app --host 127.0.0.1 --port 8008
+Restart=on-failure
+RestartSec=5
+Environment=PYTHONUTF8=1
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

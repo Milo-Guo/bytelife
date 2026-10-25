@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>商品管理练习</title>
+  <link rel="stylesheet" href="/assets/style.css">
+  <script src="/assets/app.js" defer></script>
+</head>
+<body>
+  <header><strong>商品管理练习</strong><nav><a href="/">商品列表</a><a href="/docs" target="_blank">接口文档</a><a href="/api/health" target="_blank">连接状态</a></nav></header>
+  <main>
+    <h1>商品</h1>
+    <p class="intro">新增一件商品，刷新后再查询，检查它是否真的保存在数据库中。</p>
+    <div class="workspace">
+      <section aria-label="商品列表">
+        <form id="search-form" class="search"><label for="search">商品名称</label><input id="search" placeholder="输入名称筛选"><button>查询</button><button type="button" id="refresh" class="secondary">刷新列表</button></form>
+        <p id="connection" class="muted">正在检查连接……</p>
+        <div class="table-wrap"><table><thead><tr><th>编号</th><th>商品名称</th><th>价格</th><th>库存</th><th>状态</th><th>操作</th></tr></thead><tbody id="products"></tbody></table></div>
+        <p id="total" class="muted"></p>
+        <details><summary>查看这次实际收到的接口数据</summary><pre id="response"></pre></details>
+      </section>
+      <section class="editor" aria-labelledby="editor-title">
+        <h2 id="editor-title">新增商品</h2>
+        <form id="product-form">
+          <label for="name">商品名称</label><input id="name" name="name" required maxlength="80" placeholder="例如：保温杯">
+          <label for="price">价格（元）</label><input id="price" name="price" type="number" min="0" max="1000000" step="0.01" required value="29.90">
+          <label for="stock">库存（件）</label><input id="stock" name="stock" type="number" min="0" max="1000000" step="1" required value="50">
+          <label class="checkbox"><input type="checkbox" id="published" checked>上架展示</label>
+          <label for="admin-key">管理员口令</label><input id="admin-key" type="password" autocomplete="off" placeholder="填入 .env 的 ADMIN_KEY" required>
+          <p class="muted small">口令仅保留在当前输入框中，不写入浏览器本地存储。</p>
+          <div class="actions"><button id="save">保存商品</button><button type="button" class="secondary" id="cancel">清空表单</button></div>
+        </form>
+        <p id="message" role="status" aria-live="polite"></p>
+      </section>
+    </div>
+  </main>
+</body>
+</html>

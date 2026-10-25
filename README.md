@@ -8,6 +8,8 @@ Milo 的笔记：记录我学编程、修电脑时遇到的问题和解决过程
 
 ## 已有文章
 
+- [技术栈实机入门：启动商品项目与部署，附 11 张截图和源码](content/full-stack-practice.md)
+- [技术栈全景图：零基础概念与完整课程复盘](content/full-stack-overview.md)
 - [GitHub 项目从下载到部署：dsh-purge 排错、更新、独立备份与公开／私有设置](content/github-project-deployment.md)
 - [Colab 实习：计算器、AI 人物检测与 3D 点云完整解析，附复现文件](content/colab-ai-spatial-lab.md)
 - [Git 零基础完整教程，附核心命令速查](content/git-basics.md)

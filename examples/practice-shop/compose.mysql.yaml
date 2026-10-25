@@ -1,0 +1,50 @@
+name: practice-shop-mysql
+services:
+  app:
+    build: .
+    ports:
+      - "127.0.0.1:8008:8008"
+    environment:
+      ADMIN_KEY: ${ADMIN_KEY:?请先运行初始化脚本}
+      DB_KIND: mysql
+      MYSQL_HOST: mysql
+      MYSQL_PORT: 3306
+      MYSQL_DATABASE: practice_shop
+      MYSQL_USER: shop_user
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:?请先运行初始化脚本}
+      REDIS_URL: redis://redis:6379/0
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+  mysql:
+    image: mysql:8.4
+    environment:
+      MYSQL_DATABASE: practice_shop
+      MYSQL_USER: shop_user
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:?请先运行初始化脚本}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?请先运行初始化脚本}
+    volumes:
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "MYSQL_PWD=\"$$MYSQL_PASSWORD\" mysql -h 127.0.0.1 -u shop_user -D practice_shop -e 'SELECT 1'"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+    restart: unless-stopped
+  redis:
+    image: redis:8-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+volumes:
+  mysql-data:
+  redis-data:
