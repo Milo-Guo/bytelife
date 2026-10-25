@@ -3,6 +3,11 @@ body.editor-page { height: 100vh; height: 100dvh; overflow: hidden; }
 .editor-page .site-footer { display: none; }
 .editor-page .header-inner { max-width: none; }
 .editor { display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: auto auto auto minmax(0, 1fr); min-width: 0; min-height: 0; }
+/* 工具栏隐藏时固定各区所在的行，保证最后一行始终由编辑区填满。 */
+.editor > .ed-bar { grid-row: 1; }
+.editor > .ed-meta { grid-row: 2; max-height: min(440px, 40dvh); overflow-y: auto; overscroll-behavior: contain; }
+.editor > .ed-tabs { grid-row: 3; }
+.editor > .ed-panes { grid-row: 4; }
 .ed-bar > *, .ed-doc > * { min-width: 0; }
 
 .ed-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; padding: 10px var(--gutter); border-bottom: 1px solid var(--line); }
