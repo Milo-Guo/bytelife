@@ -8,6 +8,8 @@ import re
 import sys
 from urllib.parse import unquote, urlsplit
 
+from site_analytics import UMAMI_COLLECT_ORIGIN, UMAMI_SCRIPT, is_tracking_script
+
 ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT/'_site'
 BASE = '/bytelife/'
@@ -66,6 +68,8 @@ class Page(HTMLParser):
         if tag in ('script', 'link', 'img'):
             self.loaded_before_csp = True
         if tag == 'script':
+            if len(a) != len(attrs):
+                self.problems.append('<script> 带重复属性，浏览器可能采用不同的统计配置')
             self.script = [a, '']
 
     def handle_data(self, data):
@@ -89,9 +93,40 @@ def page_rules(path, page, errors):
         errors.append(f'{name}: CSP 必须放在所有脚本、样式和图片之前')
     if re.search(r"'unsafe-(inline|eval)'|\*", page.csp):
         errors.append(f'{name}: CSP 不应放开 unsafe-inline、unsafe-eval 或通配符')
+    directives = {}
+    for directive in page.csp.split(';'):
+        parts = directive.split()
+        if not parts:
+            continue
+        if parts[0] in directives:
+            errors.append(f'{name}: CSP 重复声明 {parts[0]}')
+        else:
+            directives[parts[0]] = set(parts[1:])
+    trackers = [attrs for attrs, _ in page.scripts if is_tracking_script(attrs)]
+    writing = name.startswith('write/')
+    if trackers:
+        if writing:
+            errors.append(f'{name}: 写作页不允许加载访问统计')
+        if len(trackers) != 1:
+            errors.append(f'{name}: 访问统计脚本只能加载一次')
+        script_sources = directives.get('script-src', directives.get('default-src', set()))
+        element_sources = directives.get('script-src-elem', script_sources)
+        if UMAMI_SCRIPT not in script_sources or UMAMI_SCRIPT not in element_sources:
+            errors.append(f'{name}: CSP 必须精确允许 Umami 统计脚本')
+        if UMAMI_COLLECT_ORIGIN not in directives.get('connect-src', directives.get('default-src', set())):
+            errors.append(f'{name}: CSP 必须精确允许 Umami 数据收集地址')
+        # 保持原有的同源和脚本哈希，只给统计增加一个脚本地址与一个收集地址。
+        for source in script_sources | element_sources:
+            if source not in ("'self'", UMAMI_SCRIPT) and not re.fullmatch(r"'sha256-[A-Za-z0-9+/]+={0,2}'", source):
+                errors.append(f'{name}: 统计页面的 CSP 放开了额外脚本来源 {source}')
+        if directives.get('connect-src', set()) - {"'self'", UMAMI_COLLECT_ORIGIN}:
+            errors.append(f'{name}: 统计页面的 CSP 放开了额外数据收集来源')
+    elif any(source in (UMAMI_SCRIPT, UMAMI_COLLECT_ORIGIN, UMAMI_SCRIPT.rsplit('/', 1)[0])
+             for sources in directives.values() for source in sources):
+        errors.append(f'{name}: 未加载访问统计的页面不应放开统计 CSP')
     for attrs, text in page.scripts:
         if attrs.get('src'):
-            if urlsplit(attrs['src']).scheme or not attrs['src'].startswith(BASE):
+            if not is_tracking_script(attrs) and (urlsplit(attrs['src']).scheme or not attrs['src'].startswith(BASE)):
                 errors.append(f'{name}: 外部脚本 {attrs["src"]}')
         elif attrs.get('type') in ('application/ld+json', 'application/json'):
             try:
@@ -121,7 +156,11 @@ def link_rules(path, page, pages, errors):
             continue
         if parts.scheme or parts.netloc:
             # 外部图片、脚本、样式会被 CSP 拦下，也会把访客信息带给第三方。
-            if tag in ('img', 'script', 'source', 'use') or (tag == 'link' and rel in ('stylesheet', 'icon', 'preload')):
+            matching_scripts = [attrs for attrs, _ in page.scripts if attrs.get('src') == link]
+            allowed_tracking = (tag == 'script' and attr == 'src' and bool(matching_scripts)
+                                and all(is_tracking_script(attrs) for attrs in matching_scripts))
+            if ((tag in ('img', 'script', 'source', 'use') and not allowed_tracking)
+                    or (tag == 'link' and rel in ('stylesheet', 'icon', 'preload'))):
                 errors.append(f'{name}: 引用了外部资源 {link}')
             if tag == 'link' and rel == 'canonical' and not link.startswith(ORIGIN+BASE):
                 errors.append(f'{name}: canonical 不在站点地址下 {link}')

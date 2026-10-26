@@ -22,6 +22,7 @@ from xml.sax.saxutils import escape as xml_escape
 
 from markdown_it import MarkdownIt
 from markdown_it.token import Token
+from site_analytics import load_website_id, tracking_csp, tracking_markup
 
 ROOT = Path(__file__).resolve().parent.parent
 CONTENT = ROOT/'content'
@@ -647,6 +648,14 @@ def icon(name):
 def shell(title, description, body, relative='', article=None, noindex=False, page='page', search_link=True,
           csp=CSP, styles=(), scripts=()):
     canonical = ORIGIN+BASE+relative
+    # 写作页可能连接 GitHub 令牌，不能加载第三方统计；草稿和 404 也不累计阅读量。
+    website_id = SITE_STATE.get('analytics_website_id', '')
+    track = (website_id and relative not in ('write/', '404.html')
+             and 'editor-page' not in page.split() and not (article and article.get('draft')))
+    analytics = tracking_markup(website_id) if track else ''
+    if track:
+        csp = tracking_csp(csp)
+    analytics_notice = '<a href="https://umami.is/privacy">访问统计：Umami</a>' if track else ''
     structured = ''
     if article:
         # JSON 里的 < 写成 \u003c，标题里出现 </script> 也不会提前结束这段数据。
@@ -680,6 +689,7 @@ def shell(title, description, body, relative='', article=None, noindex=False, pa
 {structured}
 <script src="{ASSET_URLS['site.js']}" defer></script>
 {''.join(f'<script src="{ASSET_URLS[name]}" defer></script>' for name in scripts)}
+{analytics}
 </head>
 <body class="{page}" data-base="{BASE}">
 {SPRITE}
@@ -691,7 +701,7 @@ def shell(title, description, body, relative='', article=None, noindex=False, pa
 {body}
 <footer class="site-footer"><div class="footer-inner">
 <p>ByteLife · Milo Guo 的学习与生活记录</p>
-<nav class="footer-links" aria-label="站点信息">{f'<a href="{BASE}authors/">作者</a>' if SITE_STATE['multi_author'] else ''}<a href="{BASE}feed.xml">RSS</a><a href="{REPO}">源码</a><a href="{BASE}migration/">迁移记录</a></nav>
+<nav class="footer-links" aria-label="站点信息">{f'<a href="{BASE}authors/">作者</a>' if SITE_STATE['multi_author'] else ''}<a href="{BASE}feed.xml">RSS</a><a href="{REPO}">源码</a><a href="{BASE}migration/">迁移记录</a>{analytics_notice}</nav>
 <p class="footer-meta"><span>© 2026 Milo Guo</span><button class="text-button theme-reset" type="button" hidden>恢复跟随系统主题</button></p>
 </div></footer>
 </body></html>'''
@@ -733,7 +743,7 @@ def recipe_facts(meta):
 
 DRAFT_BADGE = '<span class="badge badge-draft">草稿 · 未发布</span>'
 # 有两位以上作者发表过文章时，首页列表显示作者，页脚出现“作者”入口。
-SITE_STATE = {'multi_author': False}
+SITE_STATE = {'multi_author': False, 'analytics_website_id': ''}
 
 
 def byline(meta, link=True):
@@ -1067,6 +1077,12 @@ def main(argv=None):
     parser = argparse.ArgumentParser(description='构建 ByteLife 静态网站。')
     parser.add_argument('--drafts', action='store_true', help='连同草稿一起构建，只用于本地预览，不要拿这次结果发布')
     options = parser.parse_args(argv)
+    try:
+        website_id = load_website_id(ROOT/'analytics.json')
+    except ValueError as error:
+        raise BuildError(str(error)) from error
+    # --drafts 生成的预览即使使用线上域名，也不能发送统计。
+    SITE_STATE['analytics_website_id'] = '' if options.drafts else website_id
     authors = read_authors()
     owner = next(iter(authors.values()))
     catalog = validate_articles(json.loads((ROOT/'articles.json').read_text(encoding='utf-8')), authors=authors)
@@ -1162,6 +1178,10 @@ def main(argv=None):
         print('草稿未发布：'+'、'.join(drafts)+'（本地预览草稿用 python scripts/build.py --drafts）')
     if skipped:
         print('assets 中这些文件不是网页资源，未发布：'+'、'.join(skipped))
+    if SITE_STATE['analytics_website_id']:
+        print('访问统计：已配置 Umami Cloud，仅线上域名的正式阅读页面发送统计；写作页不发送。')
+    else:
+        print('访问统计：未启用（website_id 为空，或正在构建草稿预览）。')
     print(f'构建完成：{len(articles)} 篇文章、1 篇历史存档、全文索引与站点地图 → {OUT}')
 
 
