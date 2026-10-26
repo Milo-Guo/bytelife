@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="730" viewBox="0 0 1080 730" role="img" aria-labelledby="title description">
+  <title id="title">六个阶段与文档回写闭环</title>
+  <desc id="description">环境与规则、需求文档、设计文档、开发实现、测试验收、交付归档顺序流转，发现问题后回写相应文档。根据课堂内容重新绘制，含补充解释。</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M1 1L11 6L1 11Z" fill="#127a78"/></marker>
+    <marker id="return" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M1 1L11 6L1 11Z" fill="#a76b15"/></marker>
+    <style>text{font-family:"Microsoft YaHei","Noto Sans CJK SC",sans-serif} .heading{font-size:28px;font-weight:700;fill:#123149}.body{font-size:23px;fill:#365163}.num{font-size:20px;font-weight:700;fill:#127a78}.flow{fill:none;stroke:#127a78;stroke-width:4;marker-end:url(#arrow)}</style>
+  </defs>
+  <rect width="1080" height="730" fill="#f5f8fa"/>
+  <text x="60" y="67" font-size="38" font-weight="700" fill="#123149">六个阶段，一条能回写的路</text>
+  <text x="60" y="108" font-size="23" fill="#526b79">每一站有交付物；发现偏差后，更新对应需求、设计或规则。</text>
+  <g>
+    <rect x="60" y="180" width="280" height="132" rx="16" fill="#e4f3f0" stroke="#a1ccc6"/>
+    <text x="82" y="212" class="num">STAGE 00</text><text x="82" y="248" class="heading">环境与规则</text><text x="82" y="285" class="body">规则入口与文档骨架</text>
+    <rect x="400" y="180" width="280" height="132" rx="16" fill="white" stroke="#c4d6df"/>
+    <text x="422" y="212" class="num">STAGE 01</text><text x="422" y="248" class="heading">需求文档</text><text x="422" y="285" class="body">目标、范围、验收标准</text>
+    <rect x="740" y="180" width="280" height="132" rx="16" fill="white" stroke="#c4d6df"/>
+    <text x="762" y="212" class="num">STAGE 02</text><text x="762" y="248" class="heading">设计文档</text><text x="762" y="285" class="body">结构、数据、功能约定</text>
+    <rect x="740" y="405" width="280" height="132" rx="16" fill="white" stroke="#c4d6df"/>
+    <text x="762" y="437" class="num">STAGE 03</text><text x="762" y="473" class="heading">开发实现</text><text x="762" y="510" class="body">拆成可检查的小任务</text>
+    <rect x="400" y="405" width="280" height="132" rx="16" fill="white" stroke="#c4d6df"/>
+    <text x="422" y="437" class="num">STAGE 04</text><text x="422" y="473" class="heading">测试验收</text><text x="422" y="510" class="body">真实运行、核对证据</text>
+    <rect x="60" y="405" width="280" height="132" rx="16" fill="#e4f3f0" stroke="#a1ccc6"/>
+    <text x="82" y="437" class="num">STAGE 05</text><text x="82" y="473" class="heading">交付归档</text><text x="82" y="510" class="body">运行说明、交接、保留</text>
+  </g>
+  <path d="M342 246H392" class="flow"/><path d="M682 246H732" class="flow"/>
+  <path d="M880 314V397" class="flow"/><path d="M738 471H688" class="flow"/><path d="M398 471H348" class="flow"/>
+  <path d="M60 458H27V151H200V174" fill="none" stroke="#a76b15" stroke-width="3" stroke-dasharray="8 6" marker-end="url(#return)"/>
+  <text x="58" y="371" font-size="23" fill="#976010">回到下一轮</text>
+  <rect x="60" y="587" width="960" height="77" rx="12" fill="#fff0d9"/>
+  <text x="83" y="619" font-size="24" font-weight="700" fill="#80531b">发现问题 → 定位原因 → 改代码或约定 → 再验证</text>
+  <text x="83" y="650" font-size="21" fill="#80531b">将有效经验写回对应文档；不要把“文件已生成”当作“功能已完成”。</text>
+  <text x="60" y="704" font-size="19" fill="#617a88">根据课堂内容重新绘制，含补充解释 · ByteLife</text>
+</svg>

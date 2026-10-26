@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="750" viewBox="0 0 1080 750" role="img" aria-labelledby="title description">
+  <title id="title">Rules、Skills 与 MCP 的分工</title>
+  <desc id="description">规则记录项目约定，技能提供可复用工作方法，MCP 连接工具和数据能力；三者都由支持相应机制的 AI 工具使用，不能代替权限和验收。根据课堂内容重新绘制，含补充解释。</desc>
+  <style>text{font-family:"Microsoft YaHei","Noto Sans CJK SC",sans-serif}.title{font-size:29px;font-weight:700;fill:#123149}.line{font-size:23px;fill:#365163}.small{font-size:21px;fill:#526b79}</style>
+  <rect width="1080" height="750" fill="#f5f8fa"/>
+  <text x="50" y="64" font-size="38" font-weight="700" fill="#123149">Rules、Skills、MCP 各做什么</text>
+  <text x="50" y="106" font-size="23" fill="#526b79">一个记录约定，一个提供做法，一个连接可调用的能力。</text>
+  <rect x="50" y="157" width="300" height="346" rx="18" fill="white" stroke="#bdd2dc"/>
+  <rect x="390" y="157" width="300" height="346" rx="18" fill="white" stroke="#bdd2dc"/>
+  <rect x="730" y="157" width="300" height="346" rx="18" fill="white" stroke="#bdd2dc"/>
+  <rect x="50" y="157" width="300" height="10" rx="5" fill="#127a78"/>
+  <rect x="390" y="157" width="300" height="10" rx="5" fill="#416b9d"/>
+  <rect x="730" y="157" width="300" height="10" rx="5" fill="#a76b15"/>
+  <text x="74" y="215" class="title">Rules · 规则</text>
+  <text x="74" y="261" class="line">“这个项目怎样做？”</text>
+  <text x="74" y="309" class="small">目录职责、命名、验证</text>
+  <text x="74" y="346" class="small">修改范围与协作约定</text>
+  <text x="74" y="401" class="small">例：AGENTS.md</text>
+  <text x="74" y="438" class="small">CLAUDE.md 或工具规则</text>
+  <text x="414" y="215" class="title">Skills · 技能</text>
+  <text x="414" y="261" class="line">“这类任务怎样做？”</text>
+  <text x="414" y="309" class="small">复用步骤、检查与资源</text>
+  <text x="414" y="346" class="small">在合适的任务中调用</text>
+  <text x="414" y="401" class="small">例：审查代码的流程</text>
+  <text x="414" y="438" class="small">不等于只写一个文件名</text>
+  <text x="754" y="215" class="title">MCP · 连接协议</text>
+  <text x="754" y="261" class="line">“能接哪些外部能力？”</text>
+  <text x="754" y="309" class="small">客户端连接 MCP 服务</text>
+  <text x="754" y="346" class="small">发现工具、资源等能力</text>
+  <text x="754" y="401" class="small">例：Playwright MCP</text>
+  <text x="754" y="438" class="small">不自动授予操作权限</text>
+  <rect x="50" y="546" width="980" height="126" rx="14" fill="#e4f3f0"/>
+  <text x="74" y="581" font-size="24" font-weight="700" fill="#12645f">AI 工具按自身机制使用这些材料和能力</text>
+  <text x="74" y="620" class="small">核对实际加载的规则与技能；连接工具后，仍按本轮权限操作。</text>
+  <text x="74" y="653" class="small">规则文件 ≠ 插件命令；MCP 服务已连接 ≠ 功能已验证。</text>
+  <text x="50" y="721" font-size="19" fill="#617a88">根据课堂内容重新绘制，含补充解释 · 名称、加载与调用方式以所用工具为准 · ByteLife</text>
+</svg>

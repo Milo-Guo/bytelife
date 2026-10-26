@@ -1,5 +1,15 @@
 [
   {
+    "slug": "ai-development-rules",
+    "title": "AI 开发先定规则：CLAUDE.md、AGENTS.md 与六阶段流程，附可复制模板",
+    "category": "编程",
+    "type": "tutorial",
+    "author": "milo",
+    "summary": "完整复盘10月26日录课，从项目问卷、规则文件与代码分层讲到 Skills、MCP 和验收。附三张流程图、初始化提示词、规则模板及全程回看索引。",
+    "created": "2026-10-27",
+    "updated": "2026-10-27"
+  },
+  {
     "slug": "full-stack-practice",
     "title": "技术栈实机入门：从启动第一个商品项目到 Docker、服务器部署",
     "category": "编程",

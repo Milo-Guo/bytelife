@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="830" viewBox="0 0 1080 830" role="img" aria-labelledby="title description">
+  <title id="title">请求处理与规则文件怎样对应</title>
+  <desc id="description">浏览器请求经过入口校验、业务处理、数据访问后返回。项目规则记录实际职责和路径，文档记录需求到验收；示例名称不意味着必须创建同名目录。根据课堂内容重新绘制，含补充解释。</desc>
+  <defs><marker id="arrow" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M1 1L11 6L1 11Z" fill="#127a78"/></marker></defs>
+  <style>text{font-family:"Microsoft YaHei","Noto Sans CJK SC",sans-serif}.heading{font-size:27px;font-weight:700;fill:#123149}.body{font-size:22px;fill:#365163}.small{font-size:20px;fill:#526b79}</style>
+  <rect width="1080" height="830" fill="#f5f8fa"/>
+  <text x="45" y="65" font-size="37" font-weight="700" fill="#123149">先看请求怎样走，再写职责与路径</text>
+  <text x="45" y="107" font-size="23" fill="#526b79">以下是理解分工的示意，不是必须照抄的项目目录。</text>
+  <rect x="45" y="181" width="210" height="151" rx="15" fill="#e4f3f0" stroke="#a1ccc6"/>
+  <rect x="305" y="181" width="210" height="151" rx="15" fill="white" stroke="#bdd2dc"/>
+  <rect x="565" y="181" width="210" height="151" rx="15" fill="white" stroke="#bdd2dc"/>
+  <rect x="825" y="181" width="210" height="151" rx="15" fill="white" stroke="#bdd2dc"/>
+  <text x="67" y="225" class="heading">浏览器／前端</text><text x="67" y="265" class="body">显示、输入、交互</text><text x="67" y="304" class="small">发出请求</text>
+  <text x="327" y="225" class="heading">入口与校验</text><text x="327" y="265" class="body">接收并检查参数</text><text x="327" y="304" class="small">例：路由／控制器</text>
+  <text x="587" y="225" class="heading">业务处理</text><text x="587" y="265" class="body">执行本次业务规则</text><text x="587" y="304" class="small">例：服务／函数</text>
+  <text x="847" y="225" class="heading">数据访问</text><text x="847" y="265" class="body">读写记录或文件</text><text x="847" y="304" class="small">例：查询／仓储</text>
+  <path d="M257 252H297" fill="none" stroke="#127a78" stroke-width="4" marker-end="url(#arrow)"/>
+  <path d="M517 252H557" fill="none" stroke="#127a78" stroke-width="4" marker-end="url(#arrow)"/>
+  <path d="M777 252H817" fill="none" stroke="#127a78" stroke-width="4" marker-end="url(#arrow)"/>
+  <path d="M930 340V383H150V340" fill="none" stroke="#127a78" stroke-width="3" marker-end="url(#arrow)"/>
+  <rect x="370" y="367" width="370" height="34" fill="#f5f8fa"/>
+  <text x="388" y="392" font-size="23" fill="#127a78">处理结果返回，页面更新显示</text>
+  <rect x="45" y="452" width="368" height="251" rx="16" fill="#123149"/>
+  <text x="68" y="493" font-size="26" font-weight="700" fill="white">项目根目录：规则入口示意</text>
+  <text x="68" y="540" font-size="22" fill="#d5e7ee">CLAUDE.md → 可选工具入口</text>
+  <text x="68" y="582" font-size="22" fill="#d5e7ee">AGENTS.md → 项目实际约定</text>
+  <text x="68" y="624" font-size="22" fill="#d5e7ee">docs/ → 决定与验证记录</text>
+  <text x="68" y="674" font-size="19" fill="#afcdd9">具体入口和加载方式按工具核对。</text>
+  <rect x="443" y="452" width="592" height="251" rx="16" fill="white" stroke="#bdd2dc"/>
+  <text x="468" y="494" class="heading">规则写什么，才能落到代码上</text>
+  <text x="468" y="542" class="body">写实际文件职责，不只写“代码要规范”。</text>
+  <text x="468" y="584" class="body">路径须有依据；新方案标为“拟定”。</text>
+  <text x="468" y="626" class="body">每步怎样验证，与需求、测试文档对应。</text>
+  <text x="468" y="674" class="small">单文件、小项目也能按职责说明，无需强制拆目录。</text>
+  <rect x="45" y="733" width="990" height="40" rx="8" fill="#fff0d9"/>
+  <text x="62" y="761" font-size="21" fill="#80531b">看见“保存成功”还不够：再次读取实际数据，才能验证保存结果。</text>
+  <text x="45" y="809" font-size="19" fill="#617a88">根据课堂内容重新绘制，含补充解释 · ByteLife</text>
+</svg>
