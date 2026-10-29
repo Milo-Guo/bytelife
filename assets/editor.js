@@ -357,13 +357,18 @@
     renderHead(readMeta());
     changed();
   }));
-  els.info.addEventListener('click', () => {
-    const open = els.meta.hidden;
+  function showInfo(open) {
     els.meta.hidden = !open;
     els.info.setAttribute('aria-expanded', String(open));
-    if (open) field.title.focus();
+    els.info.textContent = open ? '收起信息' : '文章信息';
     requestAnimationFrame(measure);
+  }
+  els.info.addEventListener('click', () => {
+    const open = els.meta.hidden;
+    showInfo(open);
+    if (open) field.title.focus();
   });
+  $('ed-options').addEventListener('toggle', measureSoon);
 
   /* ---------- 本机保存和版本 ---------- */
   function readRecord(slug = state.slug) {
@@ -396,7 +401,7 @@
     if (!state.slug || !state.base) return;
     const record = readRecord();
     if (dirty()) {
-      record.working = { text: els.text.value, meta: readMeta(), baseSha: state.base.sha, at: Date.now() };
+      record.working = { text: els.text.value, meta: readMeta(), baseSha: state.base.sha, baseMeta: compareMeta(state.base.meta), at: Date.now() };
       const last = record.snapshots[record.snapshots.length - 1];
       if (!last || Date.now() - last.at > 5 * 60 * 1000) snapshot('自动保存', record);
     } else delete record.working;
@@ -641,7 +646,9 @@
     state.base = { text: file.text, sha: file.sha, meta: entry };
     const local = record.working;
     if (local && (local.text !== file.text || !same(compareMeta(local.meta), compareMeta(entry)))) {
-      if (local.baseSha === file.sha) {
+      // 正文未变化时，其他设备仍可能改过标题等信息；旧草稿没有基线时也保留到版本里供人工合并。
+      const sameBaseMeta = same(compareMeta(local.baseMeta || local.meta), compareMeta(entry));
+      if (local.baseSha === file.sha && sameBaseMeta) {
         useDocument(local.text, local.meta);
         return setStatus(`已接着上次在本机的修改（${clock(local.at)}）。要放弃这些修改，到“版本”里恢复 GitHub 上的提交。`, 'dirty');
       }
@@ -776,6 +783,10 @@
     const catalog = JSON.parse(catalogFile.text);
     const index = catalog.findIndex(a => a.slug === state.slug);
     if (state.isNew && index >= 0) throw new ApiError(409, 'articles.json 里已经有这个英文名。');
+    // 只检查当前文章，避免覆盖其他设备的标题、摘要或分类，同时保留其他文章的新改动。
+    if (!state.isNew && (index < 0 || !same(compareMeta(catalog[index]), compareMeta(state.base.meta)))) {
+      throw new ApiError(409, '这篇的标题、摘要或分类等信息已在 GitHub 上更新。你的修改已保存到本机版本，请刷新后在“版本”里对比和合并，再提交。');
+    }
     const entry = catalogEntry(index >= 0 ? catalog[index] : null, meta);
     if (index >= 0) catalog[index] = entry; else catalog.push(entry);
     const catalogText = JSON.stringify(catalog, null, 2) + '\n';
@@ -802,8 +813,14 @@
 
   function openCommit() {
     if (!state.base) return;
-    if (!state.token) return openNoToken();
     const meta = readMeta();
+    const invalid = problems(meta);
+    if (invalid.length) {
+      showInfo(true);
+      setStatus(invalid.join('；'), 'error');
+      return;
+    }
+    if (!state.token) return openNoToken();
     const before = state.base.text;
     const rows = diffLines(before, els.text.value);
     const added = rows.filter(r => r[0] === '+').length, removed = rows.filter(r => r[0] === '-').length;
@@ -866,13 +883,17 @@
       const copyWay = el('section', 'ed-section');
       copyWay.append(el('h3', null, '方式二：复制到 GitHub 网页'));
       const steps = el('ol', 'ed-steps');
-      const copied = el('span', 'ed-hint');
-      const copyText = button('复制正文', async () => { await navigator.clipboard.writeText(els.text.value); copied.textContent = ' 已复制'; });
-      const step1 = el('li', null, '复制这篇的正文：');
-      step1.append(copyText, copied);
-      const step2 = el('li', null, state.isNew ? '在 GitHub 新建文件（文件名已填好），粘贴后提交：' : '打开 GitHub 编辑页，全选替换成复制的内容，再提交：');
-      step2.append(' ', link('打开 GitHub', state.isNew ? `${SITE}/new/${BRANCH}/content?filename=${state.slug}.md` : `${SITE}/edit/${BRANCH}/content/${state.slug}.md`));
-      steps.append(step1, step2);
+      if (state.isNew || els.text.value !== state.base.text) {
+        const copied = el('span', 'ed-hint');
+        const copyText = button('复制正文', async () => { await navigator.clipboard.writeText(els.text.value); copied.textContent = ' 已复制'; });
+        const step1 = el('li', null, '复制这篇的正文：');
+        step1.append(copyText, copied);
+        const step2 = el('li', null, state.isNew ? '在 GitHub 新建文件（文件名已填好），粘贴后提交：' : '打开 GitHub 编辑页，全选替换成复制的内容，再提交：');
+        step2.append(' ', link('打开 GitHub', state.isNew ? `${SITE}/new/${BRANCH}/content?filename=${state.slug}.md` : `${SITE}/edit/${BRANCH}/content/${state.slug}.md`));
+        steps.append(step1, step2);
+      } else {
+        copyWay.append(el('p', 'ed-hint', '本次只改文章信息，正文不用替换；提交下面的文章信息即可。'));
+      }
       if (state.isNew || !same(compareMeta(meta), compareMeta(state.base.meta))) {
         const entry = JSON.stringify(catalogEntry(state.base.meta, meta), null, 2);
         const step3 = el('li', null, state.isNew ? 'articles.json 里还要加上这一项（放进最外层的方括号里，和其他项用逗号隔开）：' : 'articles.json 里这一项也要换成：');

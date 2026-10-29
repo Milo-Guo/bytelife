@@ -874,18 +874,22 @@ def editor_page(catalog, authors):
 <div class="ed-bar">
 <div class="ed-doc"><label class="visually-hidden" for="ed-article">选择文章</label><select id="ed-article" class="ed-select"></select><button class="button" type="button" id="ed-new">新建</button></div>
 <p id="ed-status" class="ed-status" role="status">正在准备……</p>
-<div class="ed-actions"><button class="button" type="button" id="ed-info" aria-expanded="false" aria-controls="ed-meta">文章信息</button><button class="button" type="button" id="ed-history">版本</button><button class="button button-primary" type="button" id="ed-commit">提交</button></div>
+<div class="ed-actions"><button class="button" type="button" id="ed-info" aria-expanded="true" aria-controls="ed-meta">收起信息</button><button class="button" type="button" id="ed-history">版本</button><button class="button button-primary" type="button" id="ed-commit">提交</button></div>
 </div>
-<section id="ed-meta" class="ed-meta" aria-label="文章信息" hidden>
-<label>标题<input id="m-title"></label>
-<label>分类<input id="m-category" list="ed-categories"></label><datalist id="ed-categories">{categories}</datalist>
+<section id="ed-meta" class="ed-meta" aria-label="文章信息">
+<div class="ed-fields">
+<label class="ed-title">标题<textarea id="m-title" rows="2" placeholder="填写文章标题"></textarea></label>
+<label>分类标签<input id="m-category" list="ed-categories" placeholder="例如 CS、Windows"></label><datalist id="ed-categories">{categories}</datalist>
+<label class="wide">摘要（标题下方的介绍）<textarea id="m-summary" rows="2" placeholder="用一段话介绍这篇文章"></textarea></label>
+</div>
+<details id="ed-options" class="ed-options"><summary>更多设置</summary><div class="ed-fields ed-extra">
 <label>类型<select id="m-type">{types}</select></label>
 <fieldset class="ed-authors" id="m-authors"><legend>作者</legend>{writers}</fieldset>
 <label>更新日期<input id="m-updated" type="date"></label>
 <label class="check"><input id="m-draft" type="checkbox">草稿（不发布）</label>
 <label class="recipe-only">份量<input id="m-servings" placeholder="2 人份"></label>
 <label class="recipe-only">用时（分钟）<input id="m-minutes" type="number" min="1" max="10000" inputmode="numeric"></label>
-<label class="wide">摘要<textarea id="m-summary" rows="2"></textarea></label>
+</div></details>
 </section>
 <div class="ed-tabs" role="tablist" aria-label="切换源代码和预览"><button type="button" role="tab" data-view="source" aria-selected="true" aria-controls="ed-source">源代码</button><button type="button" role="tab" data-view="preview" aria-selected="false" aria-controls="ed-preview">预览</button></div>
 <div class="ed-panes" id="ed-panes" data-view="source">

@@ -2,7 +2,7 @@
   {
     "slug": "requirements-and-architecture",
     "title": "AI 编程先把需求说清：需求文档、验收标准与架构设计，附实机图和练习文件",
-    "category": "编程",
+    "category": "CS",
     "type": "tutorial",
     "author": "milo",
     "summary": "完整复盘10月28日录课，从十句话梳理想法、角色权限和F/AC编号，讲到架构分层、Nginx与服务端校验。附7张课堂实机图、需求与架构提示词、记账本示例和全程回看索引。",

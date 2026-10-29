@@ -24,7 +24,12 @@ body.editor-page { height: 100vh; height: 100dvh; overflow: hidden; }
 .ed-status .button { min-height: 30px; padding: 0 10px; font-size: 13px; }
 .ed-actions { display: flex; gap: 8px; }
 
-.ed-meta { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 10px 16px; padding: 14px var(--gutter); border-bottom: 1px solid var(--line); background: var(--surface-2); }
+.ed-meta { display: grid; gap: 10px; padding: 12px var(--gutter); border-bottom: 1px solid var(--line); background: var(--surface-2); }
+.ed-fields { display: grid; grid-template-columns: minmax(0, 1fr) minmax(150px, 220px); gap: 10px 16px; min-width: 0; }
+.ed-fields > * { min-width: 0; }
+.ed-meta textarea { line-height: 1.5; resize: vertical; }
+.ed-options summary { width: fit-content; cursor: pointer; color: var(--muted); font-size: 13px; }
+.ed-extra { grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); margin-top: 10px; }
 .ed-meta label, .ed-form label, .ed-token { display: flex; flex-direction: column; gap: 4px; color: var(--muted); font-size: 13px; }
 .ed-meta .wide { grid-column: 1 / -1; }
 .ed-meta .check, .ed-check { flex-direction: row; align-items: center; gap: 8px; color: var(--ink); font-size: 14px; }
@@ -103,4 +108,8 @@ body.editor-page { height: 100vh; height: 100dvh; overflow: hidden; }
   .ed-preview-inner { padding: 16px var(--gutter) 40vh; }
   .ed-actions { width: 100%; }
   .ed-actions .button { flex: 1; justify-content: center; }
+}
+@media (max-width: 600px) {
+  .ed-fields { grid-template-columns: minmax(0, 1fr); }
+  .ed-meta input, .ed-meta select, .ed-meta textarea { font-size: 16px; }
 }
