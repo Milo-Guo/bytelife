@@ -8,7 +8,7 @@ Milo 的笔记：记录我学编程、修电脑时遇到的问题和解决过程
 
 ## 已有文章
 
-- [AI 编程先把需求说清：需求文档、验收标准与架构设计，附实机图和练习文件](content/requirements-and-architecture.md)
+- [AI 编程：需求文档、验收标准与架构设计，附实机图和练习文件](content/requirements-and-architecture.md)
 - [AI 开发先定规则：CLAUDE.md、AGENTS.md 与六阶段流程，附可复制模板](content/ai-development-rules.md)
 - [技术栈实机入门：启动商品项目与部署，附 11 张截图和源码](content/full-stack-practice.md)
 - [技术栈全景图：零基础概念与完整课程复盘](content/full-stack-overview.md)
