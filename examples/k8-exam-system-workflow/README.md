@@ -4,6 +4,8 @@
 
 教程：https://milo-guo.github.io/bytelife/articles/k8-exam-system-workflow/
 
+2026-11-02 二轮复核同步更新：补充默认建议的确认状态、阶段移交、生成源与产物同步、检查器误判处理，以及错题、历史快照和主观复核的教学用例。目录仍为 9 个文件；新增用例均标明未执行，不含老师未提供的最终源码。
+
 ## 怎样使用
 
 1. 解压资料包，用 VS Code 的 File → Open Folder（文件 → 打开文件夹）打开。
