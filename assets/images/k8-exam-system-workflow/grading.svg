@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="960" viewBox="0 0 1000 960" role="img" aria-labelledby="title desc">
+<title id="title">主观题：提交后发生什么</title><desc id="desc">课堂方案重述；图中不是已经运行的 K8 软件。；学生提交测验：后端核验身份、测验归属与提交状态；保存答题与任务：客观题按规则评分；主观题进入 jobs 等待处理；worker 领取并调用模型：执行评分任务，保存结果与状态；成功 / 超时或失败：成功：保存评分；失败：显示“评分失败，待复核”；结果展示与人工复核：前端读取状态；管理员处理需要复核的项目</desc>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#527b87"/></marker></defs>
+<rect width="1000" height="960" rx="22" fill="#f3f6f8"/>
+<g font-family="Microsoft YaHei, Noto Sans CJK SC, sans-serif">
+<text x="48" y="63" font-size="34" font-weight="700" fill="#142e3a">主观题：提交后发生什么</text>
+<text x="48" y="108" font-size="22" fill="#45606c">课堂方案重述；图中不是已经运行的 K8 软件。</text>
+<rect x="48" y="145" width="904" height="112" rx="14" fill="white" stroke="#c5d4db"/>
+<rect x="48" y="145" width="9" height="112" rx="4" fill="#39888c"/>
+<text x="78" y="180" font-size="25" font-weight="700" fill="#143c4a">学生提交测验</text>
+<text x="78" y="214" font-size="22" fill="#243f4c">后端核验身份、测验归属与提交状态</text>
+<text x="78" y="242" font-size="19" fill="#5d707a">重复请求需要防止产生第二次有效提交</text>
+<path d="M 500 259 V 281" stroke="#527b87" stroke-width="3" marker-end="url(#arrow)"/>
+<rect x="48" y="285" width="904" height="112" rx="14" fill="white" stroke="#c5d4db"/>
+<rect x="48" y="285" width="9" height="112" rx="4" fill="#39888c"/>
+<text x="78" y="320" font-size="25" font-weight="700" fill="#143c4a">保存答题与任务</text>
+<text x="78" y="354" font-size="22" fill="#243f4c">客观题按规则评分；主观题进入 jobs 等待处理</text>
+<text x="78" y="382" font-size="19" fill="#5d707a">应一起生效的数据，在明确事务边界内完成</text>
+<path d="M 500 399 V 421" stroke="#527b87" stroke-width="3" marker-end="url(#arrow)"/>
+<rect x="48" y="425" width="904" height="112" rx="14" fill="white" stroke="#c5d4db"/>
+<rect x="48" y="425" width="9" height="112" rx="4" fill="#39888c"/>
+<text x="78" y="460" font-size="25" font-weight="700" fill="#143c4a">worker 领取并调用模型</text>
+<text x="78" y="494" font-size="22" fill="#243f4c">执行评分任务，保存结果与状态</text>
+<text x="78" y="522" font-size="19" fill="#5d707a">领取、重试、崩溃恢复和重复执行需进一步设计</text>
+<path d="M 500 539 V 561" stroke="#527b87" stroke-width="3" marker-end="url(#arrow)"/>
+<rect x="48" y="565" width="904" height="112" rx="14" fill="white" stroke="#c5d4db"/>
+<rect x="48" y="565" width="9" height="112" rx="4" fill="#b27c34"/>
+<text x="78" y="600" font-size="25" font-weight="700" fill="#143c4a">成功 / 超时或失败</text>
+<text x="78" y="634" font-size="22" fill="#243f4c">成功：保存评分；失败：显示“评分失败，待复核”</text>
+<text x="78" y="662" font-size="19" fill="#5d707a">课堂最长 120 秒；失败的主观题暂不计入总分</text>
+<path d="M 500 679 V 701" stroke="#527b87" stroke-width="3" marker-end="url(#arrow)"/>
+<rect x="48" y="705" width="904" height="112" rx="14" fill="white" stroke="#c5d4db"/>
+<rect x="48" y="705" width="9" height="112" rx="4" fill="#39888c"/>
+<text x="78" y="740" font-size="25" font-weight="700" fill="#143c4a">结果展示与人工复核</text>
+<text x="78" y="774" font-size="22" fill="#243f4c">前端读取状态；管理员处理需要复核的项目</text>
+<text x="78" y="802" font-size="19" fill="#5d707a">待评分、部分完成和最终完成不能混成同一个状态</text>
+<text x="48" y="920" font-size="21" fill="#365663">jobs 是任务记录/排队机制；worker 是执行任务的进程。</text>
+</g></svg>

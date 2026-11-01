@@ -1,5 +1,15 @@
 [
   {
+    "slug": "k8-exam-system-workflow",
+    "title": "K8 会考系统实操：需求、架构、接口与建表流程拆解，附 18 张实机图",
+    "category": "CS",
+    "type": "tutorial",
+    "author": "milo",
+    "summary": "完整复盘 3 小时 35 分钟实操：讲清阶段交接、F/AC 编号、需求变更同步、权限与主观评分、SQL 生成和验证、微信解绑重绑。附 18 张课堂实机图、3 张流程图、4 份修订提示词和全程回看索引。",
+    "created": "2026-11-02",
+    "updated": "2026-11-02"
+  },
+  {
     "slug": "requirements-and-architecture",
     "title": "AI 编程：需求文档、验收标准与架构设计，附实机图和练习文件",
     "category": "CS",

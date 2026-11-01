@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="960" viewBox="0 0 1000 960" role="img" aria-labelledby="title desc">
+<title id="title">新增一句需求，哪些文件要跟着改</title><desc id="desc">以后台配置模型、用户权限或微信解绑为例。；1 业务确认：谁使用？做什么？失败时怎样？本期范围是什么？；2 需求与进度：requirement.md 更新 F / AC；feature-list 引用；3 架构与接口：读取新需求 → 比较差异 → 修改受影响的流程与契约；4 数据库与后续设计：核对字段、约束、迁移；更新功能设计与测试；5 核对并交接：检查版本、引用和未决项，列出下一阶段的输入</desc>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#527b87"/></marker></defs>
+<rect width="1000" height="960" rx="22" fill="#f3f6f8"/>
+<g font-family="Microsoft YaHei, Noto Sans CJK SC, sans-serif">
+<text x="48" y="63" font-size="34" font-weight="700" fill="#142e3a">新增一句需求，哪些文件要跟着改</text>
+<text x="48" y="108" font-size="22" fill="#45606c">以后台配置模型、用户权限或微信解绑为例。</text>
+<rect x="48" y="145" width="904" height="112" rx="14" fill="white" stroke="#c5d4db"/>
+<rect x="48" y="145" width="9" height="112" rx="4" fill="#39888c"/>
+<text x="78" y="180" font-size="25" font-weight="700" fill="#143c4a">1 业务确认</text>
+<text x="78" y="214" font-size="22" fill="#243f4c">谁使用？做什么？失败时怎样？本期范围是什么？</text>
+<text x="78" y="242" font-size="19" fill="#5d707a">记录来源与 Q 的回答；建议不冒充已拍板</text>
+<path d="M 500 259 V 281" stroke="#527b87" stroke-width="3" marker-end="url(#arrow)"/>
+<rect x="48" y="285" width="904" height="112" rx="14" fill="white" stroke="#c5d4db"/>
+<rect x="48" y="285" width="9" height="112" rx="4" fill="#39888c"/>
+<text x="78" y="320" font-size="25" font-weight="700" fill="#143c4a">2 需求与进度</text>
+<text x="78" y="354" font-size="22" fill="#243f4c">requirement.md 更新 F / AC；feature-list 引用</text>
+<text x="78" y="382" font-size="19" fill="#5d707a">新增 F 接着编号；保留历史和真实开发状态</text>
+<path d="M 500 399 V 421" stroke="#527b87" stroke-width="3" marker-end="url(#arrow)"/>
+<rect x="48" y="425" width="904" height="112" rx="14" fill="white" stroke="#c5d4db"/>
+<rect x="48" y="425" width="9" height="112" rx="4" fill="#39888c"/>
+<text x="78" y="460" font-size="25" font-weight="700" fill="#143c4a">3 架构与接口</text>
+<text x="78" y="494" font-size="22" fill="#243f4c">读取新需求 → 比较差异 → 修改受影响的流程与契约</text>
+<text x="78" y="522" font-size="19" fill="#5d707a">新增权限、会话撤销、超时和错误行为需同步</text>
+<path d="M 500 539 V 561" stroke="#527b87" stroke-width="3" marker-end="url(#arrow)"/>
+<rect x="48" y="565" width="904" height="112" rx="14" fill="white" stroke="#c5d4db"/>
+<rect x="48" y="565" width="9" height="112" rx="4" fill="#39888c"/>
+<text x="78" y="600" font-size="25" font-weight="700" fill="#143c4a">4 数据库与后续设计</text>
+<text x="78" y="634" font-size="22" fill="#243f4c">核对字段、约束、迁移；更新功能设计与测试</text>
+<text x="78" y="662" font-size="19" fill="#5d707a">不一定需要新表；执行数据库必须符合当前授权范围</text>
+<path d="M 500 679 V 701" stroke="#527b87" stroke-width="3" marker-end="url(#arrow)"/>
+<rect x="48" y="705" width="904" height="112" rx="14" fill="white" stroke="#c5d4db"/>
+<rect x="48" y="705" width="9" height="112" rx="4" fill="#b27c34"/>
+<text x="78" y="740" font-size="25" font-weight="700" fill="#143c4a">5 核对并交接</text>
+<text x="78" y="774" font-size="22" fill="#243f4c">检查版本、引用和未决项，列出下一阶段的输入</text>
+<text x="78" y="802" font-size="19" fill="#5d707a">同组文件保持一个写入者；新会话不自动隔离文件</text>
+<text x="48" y="920" font-size="21" fill="#365663">发生冲突：停止并发写入 → 比较差异 → 合并确认 → 再继续。</text>
+</g></svg>

@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="960" viewBox="0 0 1000 960" role="img" aria-labelledby="title desc">
+<title id="title">K8 课堂：从想法走到可开发的设计</title><desc id="desc">每一阶段读上游文件；新增业务时先回需求确认。；00 定规则：项目约定、技术限制、文档路径；01 写需求：角色 → 功能 F → 验收 AC → 本期不做 NX；02a 架构 + 接口契约：分层、权限、任务流程；请求、响应和错误；02b 数据库：表、字段、约束、索引；SQL 与说明分文件；02c 功能设计 → 开发 → 测试 → 交付：按端和 F 设计状态与调用，再拆卡实现</desc>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#527b87"/></marker></defs>
+<rect width="1000" height="960" rx="22" fill="#f3f6f8"/>
+<g font-family="Microsoft YaHei, Noto Sans CJK SC, sans-serif">
+<text x="48" y="63" font-size="34" font-weight="700" fill="#142e3a">K8 课堂：从想法走到可开发的设计</text>
+<text x="48" y="108" font-size="22" fill="#45606c">每一阶段读上游文件；新增业务时先回需求确认。</text>
+<rect x="48" y="145" width="904" height="112" rx="14" fill="white" stroke="#c5d4db"/>
+<rect x="48" y="145" width="9" height="112" rx="4" fill="#39888c"/>
+<text x="78" y="180" font-size="25" font-weight="700" fill="#143c4a">00 定规则</text>
+<text x="78" y="214" font-size="22" fill="#243f4c">项目约定、技术限制、文档路径</text>
+<text x="78" y="242" font-size="19" fill="#5d707a">检查：真实目录和已有规则；空骨架标未完成</text>
+<path d="M 500 259 V 281" stroke="#527b87" stroke-width="3" marker-end="url(#arrow)"/>
+<rect x="48" y="285" width="904" height="112" rx="14" fill="white" stroke="#c5d4db"/>
+<rect x="48" y="285" width="9" height="112" rx="4" fill="#39888c"/>
+<text x="78" y="320" font-size="25" font-weight="700" fill="#143c4a">01 写需求</text>
+<text x="78" y="354" font-size="22" fill="#243f4c">角色 → 功能 F → 验收 AC → 本期不做 NX</text>
+<text x="78" y="382" font-size="19" fill="#5d707a">检查：业务决定与待确认问题；AC 只维护一份</text>
+<path d="M 500 399 V 421" stroke="#527b87" stroke-width="3" marker-end="url(#arrow)"/>
+<rect x="48" y="425" width="904" height="112" rx="14" fill="white" stroke="#c5d4db"/>
+<rect x="48" y="425" width="9" height="112" rx="4" fill="#39888c"/>
+<text x="78" y="460" font-size="25" font-weight="700" fill="#143c4a">02a 架构 + 接口契约</text>
+<text x="78" y="494" font-size="22" fill="#243f4c">分层、权限、任务流程；请求、响应和错误</text>
+<text x="78" y="522" font-size="19" fill="#5d707a">检查：每项能力对应需求，接口与数据归属说清楚</text>
+<path d="M 500 539 V 561" stroke="#527b87" stroke-width="3" marker-end="url(#arrow)"/>
+<rect x="48" y="565" width="904" height="112" rx="14" fill="white" stroke="#c5d4db"/>
+<rect x="48" y="565" width="9" height="112" rx="4" fill="#39888c"/>
+<text x="78" y="600" font-size="25" font-weight="700" fill="#143c4a">02b 数据库</text>
+<text x="78" y="634" font-size="22" fill="#243f4c">表、字段、约束、索引；SQL 与说明分文件</text>
+<text x="78" y="662" font-size="19" fill="#5d707a">检查：生成 / 静态审阅 / 隔离实跑分别记录</text>
+<path d="M 500 679 V 701" stroke="#527b87" stroke-width="3" marker-end="url(#arrow)"/>
+<rect x="48" y="705" width="904" height="112" rx="14" fill="white" stroke="#c5d4db"/>
+<rect x="48" y="705" width="9" height="112" rx="4" fill="#b27c34"/>
+<text x="78" y="740" font-size="25" font-weight="700" fill="#143c4a">02c 功能设计 → 开发 → 测试 → 交付</text>
+<text x="78" y="774" font-size="22" fill="#243f4c">按端和 F 设计状态与调用，再拆卡实现</text>
+<text x="78" y="802" font-size="19" fill="#5d707a">本课结尾：准备进入 02c；不能将文档 PASS 当应用上线</text>
+<text x="48" y="920" font-size="21" fill="#365663">课堂最终：47 项功能；仍有 11 个待确认事项。</text>
+</g></svg>
