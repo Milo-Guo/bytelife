@@ -39,7 +39,9 @@ docs/02a-architecture/architecture.md
 docs/02a-architecture/api-spec.md
 docs/02b-database/schema.sql
 docs/02b-database/schema.md
-docs/02c-feature-miniapp/
+docs/02c-feature-<端>/
+
+端名按项目实际选择：网页 web、小程序 miniapp、移动应用 app、桌面 desktop。只建立实际需要的端；已有项目沿用原目录，不因模板占位而改名。
 
 已有项目有等价文档时沿用实际路径，不另建平行版本。若建占位文件，索引明确标“空骨架，未完成”；不要通过生成大量空文件宣称各阶段完成。
 
