@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="690" viewBox="0 0 1200 690">
+<rect width="1200" height="690" rx="20" fill="#f2f6fa"/>
+<style>text{font-family:"Microsoft YaHei",Arial,sans-serif;fill:#18334a}.title{font-size:34px;font-weight:700}.sub{font-size:21px;fill:#48657a}.label{font-size:27px;font-weight:700}.detail{font-size:21px}</style>
+<text x="60" y="66" class="title">交给开发前，检查什么</text>
+<text x="60" y="105" class="sub">整理图：每项给文件位置或验证证据。</text>
+<rect x="60" y="155" width="320" height="150" rx="14" fill="white" stroke="#aac3d6" stroke-width="2"/>
+<text x="82" y="197" class="label">输入一致</text>
+<text x="82" y="237" class="detail">真实路径与版本</text>
+<text x="82" y="271" class="detail">端、范围和职责明确</text>
+<path d="M390 230h38m-12 -8 12 8-12 8" fill="none" stroke="#3a799f" stroke-width="3"/>
+<rect x="440" y="155" width="320" height="150" rx="14" fill="white" stroke="#aac3d6" stroke-width="2"/>
+<text x="462" y="197" class="label">规格完整</text>
+<text x="462" y="237" class="detail">每个功能写七项</text>
+<text x="462" y="271" class="detail">每条 AC 找到落点</text>
+<path d="M770 230h38m-12 -8 12 8-12 8" fill="none" stroke="#3a799f" stroke-width="3"/>
+<rect x="820" y="155" width="320" height="150" rx="14" fill="white" stroke="#aac3d6" stroke-width="2"/>
+<text x="842" y="197" class="label">契约可用</text>
+<text x="842" y="237" class="detail">请求与响应对应同一 API</text>
+<text x="842" y="271" class="detail">鉴权与错误行为齐全</text>
+<rect x="60" y="360" width="320" height="150" rx="14" fill="white" stroke="#aac3d6" stroke-width="2"/>
+<text x="82" y="402" class="label">数据有据</text>
+<text x="82" y="442" class="detail">字段、枚举与事务一致</text>
+<text x="82" y="476" class="detail">新增结构已走变更</text>
+<path d="M390 435h38m-12 -8 12 8-12 8" fill="none" stroke="#3a799f" stroke-width="3"/>
+<rect x="440" y="360" width="320" height="150" rx="14" fill="white" stroke="#aac3d6" stroke-width="2"/>
+<text x="462" y="402" class="label">服务端兜底</text>
+<text x="462" y="442" class="detail">认证、授权与参数校验</text>
+<text x="462" y="476" class="detail">会话、安全和日志边界</text>
+<path d="M770 435h38m-12 -8 12 8-12 8" fill="none" stroke="#3a799f" stroke-width="3"/>
+<rect x="820" y="360" width="320" height="150" rx="14" fill="white" stroke="#aac3d6" stroke-width="2"/>
+<text x="842" y="402" class="label">状态清楚</text>
+<text x="842" y="442" class="detail">已完成、缺口和待确认</text>
+<text x="842" y="476" class="detail">检查结果及下一步明确</text>
+<text x="60" y="626" class="sub">文档检查通过，只证明当前检查范围；应用完成仍需运行和测试证据。</text>
+</svg>

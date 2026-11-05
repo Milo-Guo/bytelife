@@ -1,5 +1,15 @@
 [
   {
+    "slug": "feature-design-security",
+    "title": "02c 功能设计实操：多端规格、接口契约与安全要求同步，附 18 张实机图",
+    "category": "CS",
+    "type": "tutorial",
+    "author": "milo",
+    "summary": "完整整理1103上下半场材料：一端一文档、七项功能规格、F/AC/API映射、12条接口缺口、安全要求回写与最终58功能统计。附18张实机图、2张整理图、技术校正、可填写提示词和逐步操作手册。",
+    "created": "2026-11-05",
+    "updated": "2026-11-05"
+  },
+  {
     "slug": "k8-exam-system-workflow",
     "title": "K8 会考系统实操：需求、架构、接口与建表流程拆解，附 18 张实机图",
     "category": "CS",

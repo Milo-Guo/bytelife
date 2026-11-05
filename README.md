@@ -8,6 +8,7 @@ Milo 的笔记：记录我学编程、修电脑时遇到的问题和解决过程
 
 ## 已有文章
 
+- [02c 功能设计实操：多端规格、接口契约与安全要求同步，附 18 张实机图](content/feature-design-security.md)
 - [K8 会考系统实操：需求、架构、接口与建表流程拆解，附 18 张实机图](content/k8-exam-system-workflow.md)
 - [AI 编程：需求文档、验收标准与架构设计，附实机图和练习文件](content/requirements-and-architecture.md)
 - [AI 开发先定规则：CLAUDE.md、AGENTS.md 与六阶段流程，附可复制模板](content/ai-development-rules.md)

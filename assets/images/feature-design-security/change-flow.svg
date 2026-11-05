@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="690" viewBox="0 0 1200 690">
+<rect width="1200" height="690" rx="20" fill="#f2f6fa"/>
+<style>text{font-family:"Microsoft YaHei",Arial,sans-serif;fill:#18334a}.title{font-size:34px;font-weight:700}.sub{font-size:21px;fill:#48657a}.label{font-size:27px;font-weight:700}.detail{font-size:21px}</style>
+<text x="60" y="66" class="title">新增要求后，怎样同步文档</text>
+<text x="60" y="105" class="sub">整理图：课堂方法与跟做建议，按实际影响迭代。</text>
+<rect x="60" y="155" width="320" height="150" rx="14" fill="white" stroke="#aac3d6" stroke-width="2"/>
+<text x="82" y="197" class="label">1 确认需求</text>
+<text x="82" y="237" class="detail">已有 F 补充或新建 F</text>
+<text x="82" y="271" class="detail">写 AC，保留待确认 Q</text>
+<path d="M390 230h38m-12 -8 12 8-12 8" fill="none" stroke="#3a799f" stroke-width="3"/>
+<rect x="440" y="155" width="320" height="150" rx="14" fill="white" stroke="#aac3d6" stroke-width="2"/>
+<text x="462" y="197" class="label">2 核对架构</text>
+<text x="462" y="237" class="detail">公共能力与依赖</text>
+<text x="462" y="271" class="detail">配置、生效和状态边界</text>
+<path d="M770 230h38m-12 -8 12 8-12 8" fill="none" stroke="#3a799f" stroke-width="3"/>
+<rect x="820" y="155" width="320" height="150" rx="14" fill="white" stroke="#aac3d6" stroke-width="2"/>
+<text x="842" y="197" class="label">3 更新契约</text>
+<text x="842" y="237" class="detail">请求、响应与鉴权</text>
+<text x="842" y="271" class="detail">错误、版本和受影响端</text>
+<rect x="60" y="360" width="320" height="150" rx="14" fill="white" stroke="#aac3d6" stroke-width="2"/>
+<text x="82" y="402" class="label">4 同步数据</text>
+<text x="82" y="442" class="detail">真实表字段与约束</text>
+<text x="82" y="476" class="detail">迁移和验证另行安排</text>
+<path d="M390 435h38m-12 -8 12 8-12 8" fill="none" stroke="#3a799f" stroke-width="3"/>
+<rect x="440" y="360" width="320" height="150" rx="14" fill="white" stroke="#aac3d6" stroke-width="2"/>
+<text x="462" y="402" class="label">5 更新各端 02c</text>
+<text x="462" y="442" class="detail">七项规格与 AC 映射</text>
+<text x="462" y="476" class="detail">一端一份，保留旧编号</text>
+<path d="M770 435h38m-12 -8 12 8-12 8" fill="none" stroke="#3a799f" stroke-width="3"/>
+<rect x="820" y="360" width="320" height="150" rx="14" fill="white" stroke="#aac3d6" stroke-width="2"/>
+<text x="842" y="402" class="label">6 检查再交接</text>
+<text x="842" y="442" class="detail">检查器加完整流程抽查</text>
+<text x="842" y="476" class="detail">列缺口，拆可验证任务</text>
+<text x="60" y="626" class="sub">发现冲突先回上游；默认建议与已确认决定分别记录。</text>
+</svg>
