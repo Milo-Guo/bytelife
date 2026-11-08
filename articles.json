@@ -1,5 +1,15 @@
 [
   {
+    "slug": "tdd-agent-delivery",
+    "title": "从功能设计到开发交付：TDD、PM 派单与三层验收，附 18 幅实机图",
+    "category": "CS",
+    "type": "tutorial",
+    "author": "milo",
+    "summary": "完整复盘11月6日会议：单卡红绿测试、AC与用例台账、独立三层验收、空库与迁移、API文档回写和PM看板派单。附18幅实机图、2张整理图、8份可填写材料、逐步操作手册与全片时间轴。",
+    "created": "2026-11-08",
+    "updated": "2026-11-08"
+  },
+  {
     "slug": "feature-design-security",
     "title": "02c 功能设计实操：多端规格、接口契约与安全要求同步，附 18 张实机图",
     "category": "CS",

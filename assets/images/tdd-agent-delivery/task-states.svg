@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="680" viewBox="0 0 1200 680" role="img" aria-labelledby="title desc">
+  <title id="title">怎样阅读任务看板状态</title>
+  <desc id="desc">任务由已规划待放行、可执行、执行中、待审查进入验证完成。等待依赖、输入或工具可能使任务受阻。视频片尾有11张任务卡受阻待派，这不能证明开发失败。本图是学习示意，状态名以实际看板为准。</desc>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto" markerUnits="userSpaceOnUse"><path d="M1 1 L9 5 L1 9" fill="none" stroke="#64748b" stroke-width="2"/></marker>
+    <marker id="blocked" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto" markerUnits="userSpaceOnUse"><path d="M1 1 L9 5 L1 9" fill="none" stroke="#b45309" stroke-width="2"/></marker>
+    <style>text{font-family:"Microsoft YaHei","PingFang SC",system-ui,sans-serif;fill:#17243b}.title{font-size:35px;font-weight:700}.sub{font-size:20px;fill:#576780}.step{font-size:25px;font-weight:700}.body{font-size:20px;fill:#334155}.small{font-size:18px;fill:#64748b}</style>
+  </defs>
+  <rect width="1200" height="680" rx="24" fill="#f6f8fc"/>
+  <rect x="40" y="42" width="7" height="72" rx="3.5" fill="#2563eb"/>
+  <text class="title" x="64" y="77">任务卡存在，不代表开发已经完成</text>
+  <text class="sub" x="64" y="110">本文学习示意，状态名以实际看板为准。</text>
+  <g fill="none" stroke="#64748b" stroke-width="2.5" marker-end="url(#arrow)"><path d="M249 279 H267"/><path d="M484 279 H502"/><path d="M719 279 H737"/><path d="M954 279 H972"/></g>
+  <rect x="35" y="190" width="210" height="178" rx="17" fill="#fff" stroke="#cbd5e1" stroke-width="2"/>
+  <rect x="270" y="190" width="210" height="178" rx="17" fill="#fff" stroke="#cbd5e1" stroke-width="2"/>
+  <rect x="505" y="190" width="210" height="178" rx="17" fill="#eef5ff" stroke="#93b7eb" stroke-width="2"/>
+  <rect x="740" y="190" width="210" height="178" rx="17" fill="#fff9ed" stroke="#e8c789" stroke-width="2"/>
+  <rect x="975" y="190" width="190" height="178" rx="17" fill="#f0fbf6" stroke="#86c6a7" stroke-width="2"/>
+  <text class="step" x="55" y="235">已规划 / 待放行</text>
+  <text class="body" x="55" y="283"><tspan x="55">已有任务与范围</tspan><tspan x="55" dy="32">尚未允许执行</tspan></text>
+  <text class="step" x="290" y="235">可执行</text>
+  <text class="body" x="290" y="283"><tspan x="290">输入与依赖就绪</tspan><tspan x="290" dy="32">已获得本轮放行</tspan></text>
+  <text class="step" x="525" y="235">执行中</text>
+  <text class="body" x="525" y="283"><tspan x="525">正在实现与测试</tspan><tspan x="525" dy="32">还需看具体结果</tspan></text>
+  <text class="step" x="760" y="235">待审查</text>
+  <text class="body" x="760" y="283"><tspan x="760">实现者已交付</tspan><tspan x="760" dy="32">等待独立验证</tspan></text>
+  <text class="step" x="995" y="235">验证完成</text>
+  <text class="body" x="995" y="283"><tspan x="995">证据符合要求</tspan><tspan x="995" dy="32">验收范围已明确</tspan></text>
+  <g fill="none" stroke="#b45309" stroke-width="2" stroke-dasharray="6 5" marker-end="url(#blocked)"><path d="M375 368 V403 H465 V437"/><path d="M610 368 V437"/></g>
+  <rect x="328" y="445" width="544" height="102" rx="16" fill="#fff3e4" stroke="#e0b578" stroke-width="2"/>
+  <text class="step" x="354" y="483" fill="#8a4b12">受阻：先查卡片上的原因</text>
+  <text class="body" x="354" y="520">可能在等依赖、必要输入或可用工具。</text>
+  <path d="M845 368 V400 H680 V378" fill="none" stroke="#64748b" stroke-width="2" marker-end="url(#arrow)"/>
+  <text class="small" x="882" y="402">审查未过则修正</text>
+  <rect x="40" y="584" width="1120" height="58" rx="12" fill="#e8eef8"/>
+  <text x="62" y="620" font-size="23" font-weight="700">片尾：11 张卡受阻待派</text>
+  <text x="442" y="620" font-size="21">这是当时的任务状态，尚不能据此认定开发失败。</text>
+</svg>
