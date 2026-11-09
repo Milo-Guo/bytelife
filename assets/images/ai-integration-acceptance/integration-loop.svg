@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="760" viewBox="0 0 1200 760" role="img" aria-labelledby="title desc">
+  <title id="title">从设计覆盖到真实服务复验</title>
+  <desc id="desc">先核对模块乘以端的设计覆盖，再做单卡开发和真实服务验收；问题形成缺陷卡，修复后回到验收。并发执行需要隔离代码树、数据库、端口和账号。</desc>
+  <defs>
+    <marker id="arrow" markerWidth="11" markerHeight="11" refX="9" refY="5.5" orient="auto" markerUnits="userSpaceOnUse"><path d="M1 1 L9 5.5 L1 10" fill="none" stroke="#64748b" stroke-width="2.2"/></marker>
+    <marker id="return" markerWidth="11" markerHeight="11" refX="9" refY="5.5" orient="auto" markerUnits="userSpaceOnUse"><path d="M1 1 L9 5.5 L1 10" fill="none" stroke="#b45309" stroke-width="2.2"/></marker>
+    <style>text{font-family:"Microsoft YaHei","PingFang SC",system-ui,sans-serif;fill:#17243b}.title{font-size:36px;font-weight:700}.sub{font-size:22px;fill:#576780}.label{font-size:25px;font-weight:700}.body{font-size:22px;fill:#334155}.note{font-size:22px;fill:#8a4b12}</style>
+  </defs>
+  <rect width="1200" height="760" rx="24" fill="#f6f8fc"/>
+  <rect x="40" y="42" width="7" height="72" rx="3.5" fill="#2563eb"/>
+  <text class="title" x="64" y="77">从设计覆盖到真实服务复验</text>
+  <text class="sub" x="64" y="113">本文归纳 · 每次完成一张卡，再核对它与其他模块和各端的连接</text>
+  <g fill="none" stroke="#64748b" stroke-width="2.5" marker-end="url(#arrow)"><path d="M252 282 H270"/><path d="M480 282 H498"/><path d="M708 282 H726"/><path d="M936 282 H954"/></g>
+  <g stroke-width="2"><rect x="42" y="188" width="210" height="187" rx="17" fill="#fff" stroke="#cbd5e1"/><rect x="270" y="188" width="210" height="187" rx="17" fill="#eef5ff" stroke="#93b7eb"/><rect x="498" y="188" width="210" height="187" rx="17" fill="#f0fbf6" stroke="#86c6a7"/><rect x="726" y="188" width="210" height="187" rx="17" fill="#fff7ed" stroke="#dfb57b"/><rect x="954" y="188" width="204" height="187" rx="17" fill="#fff" stroke="#cbd5e1"/></g>
+  <text class="label" x="60" y="230">设计覆盖</text><text class="body" x="60" y="275"><tspan x="60">模块 × 端逐格核对</tspan><tspan x="60" dy="32">控件、接口与 AC</tspan><tspan x="60" dy="32">缺口先补规格</tspan></text>
+  <text class="label" x="288" y="230">单卡开发</text><text class="body" x="288" y="275"><tspan x="288">限定本卡范围</tspan><tspan x="288" dy="32">写测试与实现</tspan><tspan x="288" dy="32">保存执行证据</tspan></text>
+  <text class="label" x="516" y="230">真实服务验收</text><text class="body" x="516" y="275"><tspan x="516">页面调用真实 API</tspan><tspan x="516" dy="32">检查数据库结果</tspan><tspan x="516" dy="32">核对权限与异常</tspan></text>
+  <text class="note" x="744" y="170">发现问题后</text>
+  <text class="label" x="744" y="230">缺陷卡</text><text class="body" x="744" y="275"><tspan x="744">复现步骤与现象</tspan><tspan x="744" dy="32">预期、日志与截图</tspan><tspan x="744" dy="32">记录受影响范围</tspan></text>
+  <text class="label" x="972" y="230">修复与复验</text><text class="body" x="972" y="275"><tspan x="972">定位最小修复</tspan><tspan x="972" dy="32">重跑失败场景</tspan><tspan x="972" dy="32">补查相关回归</tspan></text>
+  <path d="M1056 375 V432 H603 V385" fill="none" stroke="#b45309" stroke-width="2.5" stroke-dasharray="7 5" marker-end="url(#return)"/>
+  <text class="note" x="684" y="465">修复后回到真实服务验收，留存结果</text>
+  <rect x="42" y="512" width="1116" height="192" rx="18" fill="#e8eef8"/>
+  <text class="label" x="65" y="552">并发执行前，分开会互相影响的资源</text>
+  <g fill="#fff" stroke="#c5d1e4" stroke-width="1.5"><rect x="65" y="579" width="248" height="60" rx="12"/><rect x="335" y="579" width="248" height="60" rx="12"/><rect x="605" y="579" width="248" height="60" rx="12"/><rect x="875" y="579" width="260" height="60" rx="12"/></g>
+  <text class="body" x="88" y="617">代码树与分支</text><text class="body" x="358" y="617">测试数据库与数据</text><text class="body" x="628" y="617">服务端口与进程</text><text class="body" x="898" y="617">测试账号与登录态</text>
+  <text class="body" x="65" y="680">共享文件或状态有冲突时串行处理；并发人数增加，不代表验收自动完成。</text>
+</svg>

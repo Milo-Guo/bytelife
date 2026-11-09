@@ -8,6 +8,7 @@ Milo 的笔记：记录我学编程、修电脑时遇到的问题和解决过程
 
 ## 已有文章
 
+- [AI 编程实操：分层规则、跨端接线与并发验收，附 18 幅课堂图](content/ai-integration-acceptance.md)
 - [从功能设计到开发交付：TDD、PM 派单与三层验收，附 18 幅实机图](content/tdd-agent-delivery.md)
 - [02c 功能设计实操：多端规格、接口契约与安全要求同步，附 18 张实机图](content/feature-design-security.md)
 - [K8 会考系统实操：需求、架构、接口与建表流程拆解，附 18 张实机图](content/k8-exam-system-workflow.md)

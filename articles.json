@@ -1,5 +1,15 @@
 [
   {
+    "slug": "ai-integration-acceptance",
+    "title": "AI 编程实操：分层规则、跨端接线与并发验收，附 18 幅课堂图",
+    "category": "CS",
+    "type": "tutorial",
+    "author": "milo",
+    "summary": "完整整理11月8日录课：后端分层、筛选控件、模块跨端接线、Playwright验收、共享测试库与工作树冲突、F59真题导入和提示词复盘。附18幅课堂图、2张整理图、10份学习材料与指挥Agent操作手册。",
+    "created": "2026-11-09",
+    "updated": "2026-11-09"
+  },
+  {
     "slug": "tdd-agent-delivery",
     "title": "从功能设计到开发交付：TDD、PM 派单与三层验收，附 18 幅实机图",
     "category": "CS",
