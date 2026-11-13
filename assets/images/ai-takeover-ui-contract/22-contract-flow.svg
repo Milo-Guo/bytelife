@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="900" viewBox="0 0 1200 900" role="img" aria-label="文档门禁：检查差异，也检查检查器的运行条件">
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#718394"/></marker></defs>
+<rect width="1200" height="900" rx="18" fill="#f2f6fa"/>
+<g font-family="Microsoft YaHei, Noto Sans SC, sans-serif">
+<text x="46" y="61" font-size="32" font-weight="700" fill="#12354a">文档门禁：检查差异，也检查检查器的运行条件</text>
+<text x="46" y="99" font-size="21" fill="#587084">开发前核对已批准的设计；交付前核对已实现范围的一致性。</text>
+<rect x="46" y="145" width="334" height="180" rx="12" fill="white" stroke="#cfdae4"/>
+<rect x="46" y="145" width="7" height="180" rx="3" fill="#168d83"/>
+<text x="70" y="185" font-size="25" fill="#168d83">文档与变更清单</text>
+<text x="70" y="227" font-size="22" fill="#2c4e61">端点、字段、页面语义</text>
+<text x="70" y="263" font-size="22" fill="#2c4e61">已实现 / 提案分开</text>
+<rect x="433" y="145" width="334" height="180" rx="12" fill="white" stroke="#cfdae4"/>
+<rect x="433" y="145" width="7" height="180" rx="3" fill="#168d83"/>
+<text x="457" y="185" font-size="25" fill="#168d83">代码中的事实</text>
+<text x="457" y="227" font-size="22" fill="#2c4e61">注册路由、ORM模型</text>
+<text x="457" y="263" font-size="22" fill="#2c4e61">前端请求与动态路径</text>
+<rect x="820" y="145" width="334" height="180" rx="12" fill="white" stroke="#cfdae4"/>
+<rect x="820" y="145" width="7" height="180" rx="3" fill="#168d83"/>
+<text x="844" y="185" font-size="25" fill="#168d83">运行条件</text>
+<text x="844" y="227" font-size="22" fill="#2c4e61">解释器、依赖、配置</text>
+<text x="844" y="263" font-size="22" fill="#2c4e61">代码版本与加载结果</text>
+<path d="M213 334 L213 375" fill="none" stroke="#718394" stroke-width="3" marker-end="url(#arrow)"/>
+<path d="M600 334 L600 375" fill="none" stroke="#718394" stroke-width="3" marker-end="url(#arrow)"/>
+<path d="M987 334 L987 375" fill="none" stroke="#718394" stroke-width="3" marker-end="url(#arrow)"/>
+<rect x="46" y="386" width="1108" height="177" rx="12" fill="white" stroke="#cfdae4"/>
+<rect x="46" y="386" width="7" height="177" rx="3" fill="#276b9a"/>
+<text x="70" y="426" font-size="25" fill="#276b9a">对照与覆盖范围</text>
+<text x="70" y="468" font-size="22" fill="#2c4e61">归一化路径和字段 → 比较明确范围 → 输出具体差异和证据位置</text>
+<text x="70" y="504" font-size="22" fill="#2c4e61">自动检查发现结构遗漏；权限、含义、错误行为仍需要测试与Review。</text>
+<path d="M213 572 L213 605" fill="none" stroke="#718394" stroke-width="3" marker-end="url(#arrow)"/>
+<path d="M600 572 L600 605" fill="none" stroke="#718394" stroke-width="3" marker-end="url(#arrow)"/>
+<path d="M987 572 L987 605" fill="none" stroke="#718394" stroke-width="3" marker-end="url(#arrow)"/>
+<rect x="46" y="616" width="334" height="168" rx="12" fill="white" stroke="#cfdae4"/>
+<rect x="46" y="616" width="7" height="168" rx="3" fill="#168d83"/>
+<text x="70" y="656" font-size="25" fill="#168d83">PASS</text>
+<text x="70" y="698" font-size="22" fill="#2c4e61">有效环境下检查通过</text>
+<text x="70" y="734" font-size="22" fill="#2c4e61">只代表声明的范围</text>
+<rect x="433" y="616" width="334" height="168" rx="12" fill="white" stroke="#cfdae4"/>
+<rect x="433" y="616" width="7" height="168" rx="3" fill="#b54b3d"/>
+<text x="457" y="656" font-size="25" fill="#b54b3d">FAIL</text>
+<text x="457" y="698" font-size="22" fill="#2c4e61">发现契约或验收差异</text>
+<text x="457" y="734" font-size="22" fill="#2c4e61">列出缺项，阻止交付</text>
+<rect x="820" y="616" width="334" height="168" rx="12" fill="white" stroke="#cfdae4"/>
+<rect x="820" y="616" width="7" height="168" rx="3" fill="#a46b19"/>
+<text x="844" y="656" font-size="25" fill="#a46b19">ABORT / 受阻</text>
+<text x="844" y="698" font-size="22" fill="#2c4e61">环境不满足，无法判断</text>
+<text x="844" y="734" font-size="22" fill="#2c4e61">说明原因和重跑方法</text>
+<text x="46" y="834" font-size="21" fill="#587084">补充演练：临时夹具中制造遗漏应失败，恢复应通过；错误环境应受阻。</text>
+<text x="46" y="873" font-size="18" fill="#708391">整理图 · 根据2026-11-10课堂重绘；不是软件原生界面</text>
+</g></svg>

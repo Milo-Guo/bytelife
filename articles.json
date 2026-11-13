@@ -1,5 +1,15 @@
 [
   {
+    "slug": "ai-takeover-ui-contract",
+    "title": "AI 二次开发实操：旧项目接管、真实 UI 验收与文档同步门禁",
+    "category": "CS",
+    "type": "tutorial",
+    "author": "milo",
+    "summary": "完整整理11月10日2小时38分录课：旧项目接管、增量迁移、登录排错、小程序契约、四层Review、富文本文档门禁与数字人演示。附28节讲解、20幅课堂图、3张整理图、10份学习材料和全片时间轴。",
+    "created": "2026-11-13",
+    "updated": "2026-11-13"
+  },
+  {
     "slug": "apps-script-api-data-lab",
     "title": "情報学実習B完整拆解：Apps Script、YouTube、Gemini聊天与共享单车分析",
     "category": "编程",

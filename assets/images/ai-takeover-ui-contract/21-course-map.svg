@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="830" viewBox="0 0 1200 830" role="img" aria-label="从旧项目接管，到有证据的交付">
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#718394"/></marker></defs>
+<rect width="1200" height="830" rx="18" fill="#f2f6fa"/>
+<g font-family="Microsoft YaHei, Noto Sans SC, sans-serif">
+<text x="46" y="61" font-size="32" font-weight="700" fill="#12354a">从旧项目接管，到有证据的交付</text>
+<text x="46" y="99" font-size="21" fill="#587084">先弄清现状，再限定变更；验收结果需要能回到具体证据。</text>
+<rect x="46" y="145" width="316" height="220" rx="12" fill="white" stroke="#cfdae4"/>
+<rect x="46" y="145" width="7" height="220" rx="3" fill="#168d83"/>
+<text x="70" y="185" font-size="25" fill="#168d83">01 接管基线</text>
+<text x="70" y="227" font-size="22" fill="#2c4e61">入口、依赖、数据</text>
+<text x="70" y="263" font-size="22" fill="#2c4e61">代码与文档证据</text>
+<text x="70" y="299" font-size="22" fill="#2c4e61">待确认和历史行为</text>
+<rect x="442" y="145" width="316" height="220" rx="12" fill="white" stroke="#cfdae4"/>
+<rect x="442" y="145" width="7" height="220" rx="3" fill="#168d83"/>
+<text x="466" y="185" font-size="25" fill="#168d83">02 范围与契约</text>
+<text x="466" y="227" font-size="22" fill="#2c4e61">本期功能与GAP</text>
+<text x="466" y="263" font-size="22" fill="#2c4e61">现状图和目标图</text>
+<text x="466" y="299" font-size="22" fill="#2c4e61">接口、字段、AC</text>
+<rect x="838" y="145" width="316" height="220" rx="12" fill="white" stroke="#cfdae4"/>
+<rect x="838" y="145" width="7" height="220" rx="3" fill="#168d83"/>
+<text x="862" y="185" font-size="25" fill="#168d83">03 最小实施</text>
+<text x="862" y="227" font-size="22" fill="#2c4e61">保留项目约定</text>
+<text x="862" y="263" font-size="22" fill="#2c4e61">同步文档与实现</text>
+<text x="862" y="299" font-size="22" fill="#2c4e61">受影响的旧行为</text>
+<path d="M369 251 L431 251" fill="none" stroke="#718394" stroke-width="3" marker-end="url(#arrow)"/>
+<path d="M765 251 L827 251" fill="none" stroke="#718394" stroke-width="3" marker-end="url(#arrow)"/>
+<rect x="46" y="429" width="316" height="220" rx="12" fill="white" stroke="#cfdae4"/>
+<rect x="46" y="429" width="7" height="220" rx="3" fill="#276b9a"/>
+<text x="70" y="469" font-size="25" fill="#276b9a">04 真实页面</text>
+<text x="70" y="511" font-size="22" fill="#2c4e61">正常与错误状态</text>
+<text x="70" y="547" font-size="22" fill="#2c4e61">实际点击和导航</text>
+<text x="70" y="583" font-size="22" fill="#2c4e61">请求结果可追踪</text>
+<rect x="442" y="429" width="316" height="220" rx="12" fill="white" stroke="#cfdae4"/>
+<rect x="442" y="429" width="7" height="220" rx="3" fill="#276b9a"/>
+<text x="466" y="469" font-size="25" fill="#276b9a">05 跨模块业务</text>
+<text x="466" y="511" font-size="22" fill="#2c4e61">后台→接口→学生端</text>
+<text x="466" y="547" font-size="22" fill="#2c4e61">同一数据ID贯穿</text>
+<text x="466" y="583" font-size="22" fill="#2c4e61">保存、刷新、读回</text>
+<rect x="838" y="429" width="316" height="220" rx="12" fill="white" stroke="#cfdae4"/>
+<rect x="838" y="429" width="7" height="220" rx="3" fill="#276b9a"/>
+<text x="862" y="469" font-size="25" fill="#276b9a">06 交付与续接</text>
+<text x="862" y="511" font-size="22" fill="#2c4e61">通过、失败、受阻</text>
+<text x="862" y="547" font-size="22" fill="#2c4e61">命令和证据路径</text>
+<text x="862" y="583" font-size="22" fill="#2c4e61">遗留与复测入口</text>
+<path d="M996 373 L996 399" fill="none" stroke="#718394" stroke-width="3" marker-end="url(#arrow)"/>
+<path d="M996 399 H204 V419" fill="none" stroke="#718394" stroke-width="3" marker-end="url(#arrow)"/>
+<path d="M369 535 L431 535" fill="none" stroke="#718394" stroke-width="3" marker-end="url(#arrow)"/>
+<path d="M765 535 L827 535" fill="none" stroke="#718394" stroke-width="3" marker-end="url(#arrow)"/>
+<rect x="46" y="693" width="1108" height="72" rx="10" fill="#e2eeef"/>
+<text x="70" y="739" font-size="23" fill="#175c59">完成卡片、通过局部测试、跑通真实业务：分别记录，不能相互替代。</text>
+<text x="46" y="803" font-size="18" fill="#708391">整理图 · 根据2026-11-10课堂重绘；不是软件原生界面</text>
+</g></svg>
