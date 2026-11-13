@@ -1,9 +1,44 @@
 [
-  {"id": "ai-coding", "name": "AI 编程", "color": "blue", "aliases": ["CS"]},
-  {"id": "programming", "name": "编程基础", "color": "teal", "aliases": ["编程"]},
-  {"id": "unity", "name": "Unity", "color": "violet"},
-  {"id": "data-lab", "name": "数据实践", "color": "orange"},
-  {"id": "windows", "name": "Windows", "color": "sky"},
-  {"id": "minecraft", "name": "Minecraft", "color": "green"},
-  {"id": "class-notes", "name": "课堂笔记", "color": "rose"}
+  {
+    "id": "ai-coding",
+    "name": "AI 编程",
+    "color": "blue",
+    "aliases": [
+      "CS"
+    ]
+  },
+  {
+    "id": "programming",
+    "name": "CS",
+    "color": "teal",
+    "aliases": [
+      "编程",
+      "编程基础"
+    ]
+  },
+  {
+    "id": "unity",
+    "name": "Unity",
+    "color": "violet"
+  },
+  {
+    "id": "data-lab",
+    "name": "数据实践",
+    "color": "orange"
+  },
+  {
+    "id": "windows",
+    "name": "Windows",
+    "color": "sky"
+  },
+  {
+    "id": "minecraft",
+    "name": "Minecraft",
+    "color": "green"
+  },
+  {
+    "id": "class-notes",
+    "name": "课堂笔记",
+    "color": "rose"
+  }
 ]
