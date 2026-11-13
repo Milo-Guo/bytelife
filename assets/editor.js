@@ -5,6 +5,7 @@
   'use strict';
   const $ = id => document.getElementById(id);
   const data = JSON.parse($('editor-data').textContent);
+  const managed = data.managed === true;
   const labels = ByteLifeLabels;
   let tags = labels.validateTags(data.tags);
   const API = 'https://api.github.com';
@@ -443,6 +444,12 @@
   function changed() { renderSoon(); clearTimeout(saveTimer); saveTimer = setTimeout(saveLocal, 800); updateStatus(); }
   function updateStatus(savedAt) {
     if (!state.base) return;
+    if (managed) {
+      if (state.saving) setStatus('正在保存并同步……');
+      else if (dirty()) setStatus(`尚未同步 · ${savedAt ? '本机草稿已保留 · ' : ''}点击“保存”同步`, 'dirty');
+      else setStatus(state.cloudStatus || '已与后台同步', 'clean');
+      return;
+    }
     const who = state.login ? ` · 已连接 @${state.login}` : '';
     if (state.isNew) setStatus(`新文章，还没提交到 GitHub${savedAt ? ` · 已存到本机 ${clock(savedAt)}` : ''}${who}`, 'dirty');
     else if (dirty()) setStatus(`有未提交的修改${savedAt ? ` · 已存到本机 ${clock(savedAt)}` : ''}${who}`, 'dirty');
@@ -454,6 +461,7 @@
   document.addEventListener('keydown', event => {
     if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 's') {
       event.preventDefault();
+      if (managed) { openCommit(); return; }
       writeRecord(snapshot('手动保存'));
       saveLocal();
       setStatus(`已在本机存了一个版本 · ${clock(Date.now())}`, 'clean');
@@ -591,6 +599,10 @@
     constructor(status, message) { super(message); this.status = status; }
   }
   async function api(path, { method = 'GET', body } = {}) {
+    if (managed) {
+      if (method !== 'GET') throw new Error('请使用保存按钮同步修改。');
+      return ByteLifeStudio.request('/api/read?path=' + encodeURIComponent(path));
+    }
     const headers = { Accept: 'application/vnd.github+json' };
     if (state.token) headers.Authorization = `Bearer ${state.token}`;
     if (body) headers['Content-Type'] = 'application/json';
@@ -846,8 +858,32 @@
     return [...new Uint8Array(digest)].map(b => b.toString(16).padStart(2, '0')).join('');
   }
 
+  async function saveManaged(meta) {
+    state.saving = true; saveLocal(); writeRecord(snapshot('同步前'));
+    const controls = [...document.querySelectorAll('#main button, #main input, #main select, #main textarea')].map(node => [node, node.disabled]);
+    for (const [node] of controls) node.disabled = true;
+    try {
+      const result = await ByteLifeStudio.request('/api/save-article', { meta, text: els.text.value, isNew: state.isNew, baseSha: state.base.sha, baseMeta: state.base.meta });
+      state.isNew = false;
+      state.base = { text: result.text, sha: result.blobSha, meta: result.entry };
+      const index = state.catalog.findIndex(a => a.slug === state.slug);
+      if (index >= 0) state.catalog[index] = result.entry; else state.catalog.unshift(result.entry);
+      els.text.value = result.text; fillMeta(result.entry);
+      const record = readRecord(); delete record.working; record.isNew = false;
+      record.snapshots.push({ at: Date.now(), label: '已同步', text: result.text, meta: result.entry });
+      writeRecord(record); fillSelect(); renderPreview();
+      ByteLifeStudio.watch(result.sha, text => { state.cloudStatus = text; if (!dirty() && !state.saving) setStatus(text, 'clean'); });
+    } catch (error) {
+      state.saving = false; saveLocal(); setStatus(error.message, 'error');
+      return;
+    } finally {
+      state.saving = false;
+      for (const [node, disabled] of controls) node.disabled = disabled;
+    }
+    updateStatus();
+  }
   function openCommit() {
-    if (!state.base) return;
+    if (!state.base || state.saving) return;
     const meta = readMeta();
     const invalid = problems(meta);
     if (invalid.length) {
@@ -855,6 +891,7 @@
       setStatus(invalid.join('；'), 'error');
       return;
     }
+    if (managed) { if (dirty()) saveManaged(meta); else updateStatus(); return; }
     if (!state.token) return openNoToken();
     const before = state.base.text;
     const rows = diffLines(before, els.text.value);
@@ -955,6 +992,12 @@
 
   /* ---------- 启动 ---------- */
   (async () => {
+    if (managed) {
+      $('ed-commit').textContent = '保存';
+      const settings = link('同步设置', '/connect'); settings.target = '_self';
+      document.querySelector('.ed-actions').prepend(settings);
+      ByteLifeStudio.resume(text => { state.cloudStatus = text; if (state.base && !dirty() && !state.saving) setStatus(text, 'clean'); });
+    }
     fillSelect();
     const wanted = new URLSearchParams(location.search).get('a');
     const first = wanted && SLUG.test(wanted) ? wanted : (state.catalog[0] && state.catalog[0].slug);

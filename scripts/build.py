@@ -32,6 +32,7 @@ OUT = ROOT/'_site'
 BASE = '/bytelife/'
 ORIGIN = 'https://milo-guo.github.io'
 REPO = 'https://github.com/Milo-Guo/bytelife'
+STUDIO = 'https://bytelife-studio-milo.hongqua136.chatgpt.site/bytelife/'
 MD = MarkdownIt('commonmark', {'html': True, 'breaks': False}).enable('table').enable('strikethrough')
 ALL = '全部'
 
@@ -58,7 +59,7 @@ EDITOR_CSP = (CSP.replace("connect-src 'self'", "connect-src 'self' https://api.
               .replace("trusted-types 'none'", "trusted-types bytelife-preview"))
 MANAGE_CSP = CSP.replace("connect-src 'self'", "connect-src 'self' https://api.github.com")
 THEME_COLORS = {'light': '#f7f6f3', 'dark': '#131416'}
-ASSET_NAMES = ('site.css', 'site.js', 'home.js', 'editor.css', 'editor.js', 'labels.js', 'manager.css', 'manager.js')
+ASSET_NAMES = ('site.css', 'site.js', 'home.js', 'editor.css', 'editor.js', 'labels.js', 'manager.css', 'manager.js', 'studio.js')
 ASSET_URLS = {name: BASE+'assets/'+name for name in ASSET_NAMES}
 TAG_COLORS = {'blue', 'teal', 'violet', 'orange', 'sky', 'green', 'rose', 'slate'}
 TAGS = []
@@ -858,7 +859,7 @@ def article_page(meta, html, toc, archive=None, revs=()):
     facts = ''.join(f'<span>{fact}</span>' for fact in recipe_facts(meta))
     history = f'<a class="meta-link" href="#revisions">修改记录</a>' if revs else ''
     edit = (f'<a class="text-link" href="{REPO}/edit/main/{src}">在 GitHub 编辑</a>' if archive
-            else f'<a class="text-link" href="{BASE}write/?a={slug}">编辑这篇</a>')
+            else f'<a class="text-link" href="{STUDIO}write/?a={slug}">编辑这篇</a>')
     related = (f'<p class="related-archive">迁移前的 PCL 图文：<a href="{BASE}archive/minecraft-pcl-2026-10-05/">查看 2026-10-05 原文存档</a></p>'
                if slug == 'minecraft-mod' else '')
     return f'''<div class="reading-progress" aria-hidden="true"><span></span></div>
@@ -933,12 +934,12 @@ def editor_page(catalog, authors):
 <div class="ed-bar">
 <div class="ed-doc"><label class="visually-hidden" for="ed-article">选择文章</label><select id="ed-article" class="ed-select"></select><button class="button" type="button" id="ed-new">新建</button></div>
 <p id="ed-status" class="ed-status" role="status">正在准备……</p>
-<div class="ed-actions"><button class="button" type="button" id="ed-info" aria-expanded="true" aria-controls="ed-meta">收起信息</button><button class="button" type="button" id="ed-history">版本</button><button class="button button-primary" type="button" id="ed-commit">提交</button></div>
+<div class="ed-actions"><a class="text-link legacy-studio-link" href="{STUDIO}write/">进入登录后台</a><button class="button" type="button" id="ed-info" aria-expanded="true" aria-controls="ed-meta">收起信息</button><button class="button" type="button" id="ed-history">版本</button><button class="button button-primary" type="button" id="ed-commit">提交</button></div>
 </div>
 <section id="ed-meta" class="ed-meta" aria-label="文章信息">
 <div class="ed-fields">
 <label class="ed-title">标题<textarea id="m-title" rows="2" placeholder="填写文章标题"></textarea></label>
-<fieldset class="ed-labels"><legend>文章标签 · 可多选</legend><div id="m-tags" class="tag-options"></div><div class="ed-label-actions"><a href="{BASE}labels/" target="_blank" rel="noopener">管理名称与颜色 ↗</a><button type="button" class="text-button" id="ed-refresh-tags">刷新标签</button></div></fieldset>
+<fieldset class="ed-labels"><legend>文章标签 · 可多选</legend><div id="m-tags" class="tag-options"></div><div class="ed-label-actions"><a href="{STUDIO}labels/" target="_blank" rel="noopener">管理名称与颜色 ↗</a><button type="button" class="text-button" id="ed-refresh-tags">刷新标签</button></div></fieldset>
 <label class="wide">摘要（标题下方的介绍）<textarea id="m-summary" rows="2" placeholder="用一段话介绍这篇文章"></textarea></label>
 </div>
 <details id="ed-options" class="ed-options"><summary>更多设置</summary><div class="ed-fields ed-extra">
@@ -1052,7 +1053,7 @@ def home_page(articles, index_url, now=''):
 <aside class="home-rail" aria-label="首页工具">
 <details class="home-toolbox" open><summary>分类与阅读{icon('chevron')}</summary><div class="home-toolbox-body">
 <nav class="rail-nav js-only" aria-label="文章视图"><button class="rail-button is-active" type="button" data-library-view="all" aria-pressed="true">{icon('list')}全部文章<span>{len(articles)}</span></button><button class="rail-button" type="button" data-library-view="saved" aria-pressed="false">{icon('bookmark')}我的收藏<span data-saved-count>0</span></button></nav>
-<section class="rail-section rail-labels" aria-labelledby="labels-title"><div class="rail-section-head"><h2 id="labels-title">按标签浏览</h2><a href="{BASE}labels/" class="rail-manage">管理标签</a></div><div class="chips label-nav" role="group" aria-label="按标签筛选">{chips}</div></section>
+<section class="rail-section rail-labels" aria-labelledby="labels-title"><div class="rail-section-head"><h2 id="labels-title">按标签浏览</h2><a href="{STUDIO}labels/" class="rail-manage">管理标签</a></div><div class="chips label-nav" role="group" aria-label="按标签筛选">{chips}</div></section>
 <details class="rail-extras" open><summary>更多阅读工具{icon('chevron')}</summary><div>
 <section class="rail-section js-only" aria-labelledby="resume-title"><h2 id="resume-title">继续阅读</h2><p class="rail-empty" id="resume-empty">读过文章后，这里会记住你的位置。</p><a class="resume-link" id="resume-link" hidden><span id="resume-name"></span><span class="resume-meta" id="resume-meta"></span><progress id="resume-progress" max="100" value="0" aria-label="上次阅读进度"></progress></a></section>
 <section class="rail-section" aria-labelledby="tools-title"><h2 id="tools-title">常用工具</h2><button class="rail-button js-only" type="button" data-open-tool="json">{icon('code')}JSON 格式化</button><button class="rail-button js-only" type="button" data-open-tool="timestamp">{icon('clock')}时间戳转换</button><a class="rail-button" href="{BASE}articles/git-basics/#git-commands-a">{icon('list')}Git 命令速查{icon('arrow-right')}</a></section>
@@ -1063,7 +1064,7 @@ def home_page(articles, index_url, now=''):
 </aside>
 <div class="home-content">
 <section class="intro" aria-labelledby="intro-title">
-<div class="intro-eyebrow"><span>BYTELIFE / NOTEBOOK</span><a href="{BASE}write/">写文章 {icon('arrow-right')}</a></div>
+<div class="intro-eyebrow"><span>BYTELIFE / NOTEBOOK</span><a href="{STUDIO}write/">写文章 {icon('arrow-right')}</a></div>
 <h1 id="intro-title">Milo 的笔记</h1>
 <p>记录我学编程、修电脑时遇到的问题和解决过程，以后也写做菜和生活。</p>
 <p class="intro-meta">{len(articles)} 篇文章{writers} · 最近更新 <time datetime="{latest}">{latest}</time></p>
@@ -1093,7 +1094,7 @@ def manager_page(catalog):
     blob = json.dumps(data, ensure_ascii=False).replace('<', '\\u003c')
     return f'''<main id="main" class="label-manager" aria-busy="true">
 <a class="back-link" href="{BASE}">{icon('arrow-left')}回到笔记</a>
-<header class="manager-heading"><div><p class="manager-eyebrow">整理你的笔记</p><h1>标签管理</h1><p>给标签取个名字，选一种颜色，再把文章放进去。</p></div><a class="button" href="{BASE}write/">写文章 {icon('arrow-right')}</a></header>
+<header class="manager-heading"><div><p class="manager-eyebrow">整理你的笔记</p><h1>标签管理</h1><p>给标签取个名字，选一种颜色，再把文章放进去。</p><p class="legacy-studio-link"><a class="text-button" href="{STUDIO}labels/">进入登录后台：直接保存，无需令牌 ↗</a> · 旧草稿仍保留在此页面。</p></div><a class="button" href="{STUDIO}write/">写文章 {icon('arrow-right')}</a></header>
 <div class="manager-savebar"><div><span class="save-indicator" aria-hidden="true"></span><p id="manager-status" role="status" aria-live="polite" tabindex="-1">正在载入标签……</p></div><div class="manager-save-actions"><button class="button" id="manager-connect" type="button">连接 GitHub</button><button class="button button-primary" id="manager-publish" type="button" disabled>发布更改</button></div></div>
 <p id="manager-message" class="manager-message" role="status" hidden></p>
 <div class="manager-grid">
@@ -1223,10 +1224,10 @@ def main(argv=None):
     write('write/index.html', shell('写作', '在浏览器里编辑 ByteLife 文章：左边 Markdown，右边实时预览。',
                                     editor_page(catalog, authors),
                                     'write/', noindex=True, page='page editor-page', csp=EDITOR_CSP,
-                                    styles=('editor.css',), scripts=(VENDOR_MARKDOWN_IT, 'editor.js')))
+                                    styles=('editor.css',), scripts=(VENDOR_MARKDOWN_IT, 'studio.js', 'editor.js')))
     write('labels/index.html', shell('标签管理', '管理 ByteLife 标签的名称、颜色和文章分类。', manager_page(catalog),
                                      'labels/', noindex=True, page='page manage-page', csp=MANAGE_CSP,
-                                     styles=('manager.css',), scripts=('manager.js',)))
+                                     styles=('manager.css',), scripts=('studio.js', 'manager.js',)))
 
     html, _ = render((ROOT/'MIGRATION.md').read_text(encoding='utf-8'))
     write('migration/index.html', shell('从论坛迁到这里', 'ByteLife 公开文章、配图和历史版本的迁移记录。',

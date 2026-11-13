@@ -4,6 +4,8 @@
   const $ = id => document.getElementById(id);
   const L = ByteLifeLabels;
   const data = JSON.parse($('manager-data').textContent);
+  const managed = data.managed === true;
+  let autoSaveTimer = 0, cloudStatus = '';
   const API = 'https://api.github.com';
   const repoPath = `/repos/${data.repo}`;
   const STORE = `bytelife-labels:v1:${data.repo}`;
@@ -36,11 +38,11 @@
     const changed = dirty();
     $('main').setAttribute('aria-busy', String(busy));
     document.querySelector('.manager-savebar').dataset.dirty = String(changed);
-    $('manager-status').textContent = busy ? '正在连接 GitHub，请稍候……' : changed
+    $('manager-status').textContent = managed ? (busy ? '正在同步，请稍候……' : changed ? (storageFailed ? '尚未同步 · 本机备份不可用，请保持页面打开' : '尚未同步 · 本机草稿已保留') : cloudStatus || (onlineLoaded ? '已与后台同步' : '正在载入……')) : busy ? '正在连接 GitHub，请稍候……' : changed
       ? (storageFailed ? '有未发布更改 · 本机存储不可用，请导出备份' : '有未发布更改 · 已自动保存到本机') : (onlineLoaded ? '已与线上版本同步' : '当前为随网站发布的版本');
     $('manager-publish').disabled = busy || !changed;
     $('manager-connect').disabled = busy;
-    $('manager-connect').textContent = login ? `已连接 ${login} · 断开` : '连接 GitHub';
+    $('manager-connect').textContent = managed ? '同步设置' : login ? `已连接 ${login} · 断开` : '连接 GitHub';
     document.querySelector('.manager-grid').inert = busy;
     $('manager-reload').disabled = busy;
     $('manager-export').disabled = busy;
@@ -68,7 +70,10 @@
       say('已恢复上次未发布的更改，可以继续整理。');
     } catch { say('本机草稿格式无法读取，暂时显示网站版本。', 'error'); }
   }
-  function changed() { save(); render(); }
+  function changed() {
+    save(); render();
+    if (managed) { clearTimeout(autoSaveTimer); autoSaveTimer = setTimeout(() => { if (dirty() && !busy) publish(); }, 700); }
+  }
   function visibleArticles() {
     const q = $('manager-search').value.trim().toLocaleLowerCase();
     const filter = $('manager-filter').value;
@@ -238,6 +243,7 @@
     }
   }
   async function remote() {
+    if (managed) return ByteLifeStudio.request('/api/catalog');
     const head = (await api(`${repoPath}/git/ref/heads/${data.branch}`)).object.sha;
     const [tagData, articleData] = await Promise.all([getJson('tags.json', head), getJson('articles.json', head)]);
     const tags = L.validateTags(tagData); validateArticles(articleData, tags);
@@ -248,6 +254,7 @@
     articles = latest.articles; base = L.snapshot(latest.tags, articles); draft = L.clone(base); selected.clear(); save(); render();
   }
   async function reload() {
+    clearTimeout(autoSaveTimer);
     busy = true; syncStatus();
     try { useRemote(await remote()); say('已载入 GitHub 上的最新标签和文章。'); }
     catch (error) { say(error.message, 'error'); }
@@ -278,6 +285,7 @@
   }
   function publishDialog() {
     if (!dirty() || busy) return;
+    if (managed) { publish(); return; }
     if (!token) { connect(publishDialog); return; }
     const body = openDialog('发布标签更改');
     const changedArticles = draft.articles.filter(a => !L.same(a.tags, base.articles.find(b => b.slug === a.slug)?.tags)).length;
@@ -285,8 +293,16 @@
     body.append(actions(button('继续整理', () => dialog.close()), button('确认发布', () => { dialog.close(); publish(); }, 'button button-primary')));
   }
   async function publish() {
+    if (busy || !dirty()) return;
+    clearTimeout(autoSaveTimer);
     busy = true; save(); syncStatus(); say();
     try {
+      if (managed) {
+        const result = await ByteLifeStudio.request('/api/save-labels', { base, draft });
+        useRemote(result);
+        ByteLifeStudio.watch(result.sha, text => { cloudStatus = text; syncStatus(); });
+        return;
+      }
       const latest = await remote();
       const merged = L.mergeChanges(base, draft, latest.tags, latest.articles);
       const files = [];
@@ -314,7 +330,7 @@
   $('batch-add').addEventListener('click', () => assignDialog([...selected], 'add'));
   $('batch-remove').addEventListener('click', () => assignDialog([...selected], 'remove'));
   $('manager-publish').addEventListener('click', publishDialog);
-  $('manager-connect').addEventListener('click', () => { if (token) { token = ''; login = ''; syncStatus(); } else connect(); });
+  $('manager-connect').addEventListener('click', () => { if (managed) { save(); location.assign('/connect'); } else if (token) { token = ''; login = ''; syncStatus(); } else connect(); });
   $('manager-reload').addEventListener('click', () => {
     if (!dirty()) { reload(); return; }
     const body = openDialog('重新载入线上版本？');
@@ -330,6 +346,10 @@
   // 返回缓存页面时同步连接状态，不把已清除的令牌显示为仍然有效。
   addEventListener('pageshow', syncStatus);
   (async () => {
+    if (managed) {
+      $('manager-publish').textContent = '保存';
+      ByteLifeStudio.resume(text => { cloudStatus = text; syncStatus(); });
+    }
     restore(); busy = true; render();
     try {
       const latest = await remote();
