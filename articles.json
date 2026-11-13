@@ -1,5 +1,15 @@
 [
   {
+    "slug": "apps-script-api-data-lab",
+    "title": "情報学実習B完整拆解：Apps Script、YouTube、Gemini聊天与共享单车分析",
+    "category": "编程",
+    "type": "tutorial",
+    "author": "milo",
+    "summary": "按11月13日课堂顺序，从变量、数组和JSON讲到邮编查询、YouTube循环、Gemini前后端、Places店铺表和Python数据分析。含33节讲解、7张关系图与统计图、中文注释代码包，并用4918条真实记录纠正统计口径。",
+    "created": "2026-11-13",
+    "updated": "2026-11-13"
+  },
+  {
     "slug": "unity-vr-ar-lab",
     "title": "Unity VR／AR 实习完整拆解：读懂现成工程、人物移动、相机与点击放置",
     "category": "编程",

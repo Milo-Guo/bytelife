@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="620" viewBox="0 0 1200 620" role="img" aria-label="为什么连接时要保留“没有人骑”的小时">
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#517389"/></marker></defs>
+<rect width="1200" height="620" rx="20" fill="#f3f7fa"/>
+<g font-family="Microsoft YaHei, Noto Sans CJK SC, sans-serif" fill="#18364a">
+<text x="42" y="53" font-size="29" font-weight="700">为什么连接时要保留“没有人骑”的小时</text>
+<text x="42" y="87" font-size="18" fill="#526c7d">虚构三小时示例，只解释方法；正式分析使用完整744小时。</text>
+<rect x="42" y="124" width="300" height="231" rx="14" fill="#e5f4ef" stroke="#c5d7e2"/>
+<text x="60" y="156" font-size="22" font-weight="700">左表：完整小时 + 雨量</text>
+<text x="60" y="189" font-size="18">10:00     0.0 mm</text>
+<text x="60" y="216" font-size="18">11:00     0.5 mm</text>
+<text x="60" y="243" font-size="18">12:00     1.0 mm</text>
+<rect x="446" y="124" width="300" height="231" rx="14" fill="#e9f0fd" stroke="#c5d7e2"/>
+<text x="464" y="156" font-size="22" font-weight="700">右表：有记录的小时</text>
+<text x="464" y="189" font-size="18">10:00     8 次</text>
+<text x="464" y="216" font-size="18">12:00     2 次</text>
+<text x="464" y="243" font-size="18">11:00 没有分组结果</text>
+<rect x="850" y="124" width="308" height="231" rx="14" fill="#fff1dc" stroke="#c5d7e2"/>
+<text x="868" y="156" font-size="22" font-weight="700">左连接后</text>
+<text x="868" y="189" font-size="18">10:00     0.0 mm     8 次</text>
+<text x="868" y="216" font-size="18">11:00     0.5 mm     0 次</text>
+<text x="868" y="243" font-size="18">12:00     1.0 mm     2 次</text>
+<line x1="354" y1="230" x2="431" y2="230" stroke="#517389" stroke-width="3" marker-end="url(#arrow)"/>
+<line x1="758" y1="230" x2="836" y2="230" stroke="#517389" stroke-width="3" marker-end="url(#arrow)"/>
+<rect x="42" y="405" width="532" height="125" rx="14" fill="#e5f4ef" stroke="#c5d7e2"/>
+<text x="60" y="437" font-size="22" font-weight="700">保留零利用小时</text>
+<text x="60" y="470" font-size="18">有雨平均 = (0 + 2) ÷ 2 = 1 次／小时</text>
+<text x="60" y="497" font-size="18">分母包括11时和12时两个小时</text>
+<rect x="612" y="405" width="546" height="125" rx="14" fill="#fff1dc" stroke="#c5d7e2"/>
+<text x="630" y="437" font-size="22" font-weight="700">若只保留有骑行的小时</text>
+<text x="630" y="470" font-size="18">会变成 2 ÷ 1 = 2 次／小时</text>
+<text x="630" y="497" font-size="18">漏掉11时，分母变小，平均值变高</text>
+<text x="42" y="579" font-size="19">只把缺少骑行记录的次数填0；降水量缺失表示未知，不能顺手填成“没有雨”。</text>
+</g></svg>

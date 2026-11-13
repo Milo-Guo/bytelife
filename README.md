@@ -8,6 +8,7 @@ Milo 的笔记：记录我学编程、修电脑时遇到的问题和解决过程
 
 ## 已有文章
 
+- [情報学実習B完整拆解：Apps Script、YouTube、Gemini聊天与共享单车分析](content/apps-script-api-data-lab.md)
 - [Unity VR／AR 实习完整拆解：读懂现成工程、人物移动、相机与点击放置](content/unity-vr-ar-lab.md)
 - [AI 编程实操：分层规则、跨端接线与并发验收，附 18 幅课堂图](content/ai-integration-acceptance.md)
 - [从功能设计到开发交付：TDD、PM 派单与三层验收，附 18 幅实机图](content/tdd-agent-delivery.md)

@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="700" viewBox="0 0 1200 700" role="img" aria-label="一节课中的两条工作路线">
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#517389"/></marker></defs>
+<rect width="1200" height="700" rx="20" fill="#f3f7fa"/>
+<g font-family="Microsoft YaHei, Noto Sans CJK SC, sans-serif" fill="#18364a">
+<text x="42" y="53" font-size="29" font-weight="700">一节课中的两条工作路线</text>
+<text x="42" y="87" font-size="18" fill="#526c7d">上半段调用在线服务，下半段读取本地数据；先分清程序运行在哪里。</text>
+<rect x="42" y="127" width="282" height="130" rx="14" fill="#e5f4ef" stroke="#c5d7e2"/>
+<text x="60" y="159" font-size="22" font-weight="700">输入与操作</text>
+<text x="60" y="192" font-size="18">Google Sheets：邮编／搜索词</text>
+<text x="60" y="219" font-size="18">聊天网页：一句话</text>
+<rect x="394" y="127" width="342" height="130" rx="14" fill="#e9f0fd" stroke="#c5d7e2"/>
+<text x="412" y="159" font-size="22" font-weight="700">Apps Script · Google服务器</text>
+<text x="412" y="192" font-size="18">.gs：请求API、整理结果</text>
+<text x="412" y="219" font-size="18">HTML：交给浏览器显示</text>
+<rect x="806" y="127" width="352" height="130" rx="14" fill="#fff1dc" stroke="#c5d7e2"/>
+<text x="824" y="159" font-size="22" font-weight="700">外部API</text>
+<text x="824" y="192" font-size="18">zipcloud / YouTube / Places</text>
+<text x="824" y="219" font-size="18">Gemini：生成回复</text>
+<line x1="331" y1="184" x2="381" y2="184" stroke="#517389" stroke-width="3" marker-end="url(#arrow)"/>
+<line x1="744" y1="184" x2="794" y2="184" stroke="#517389" stroke-width="3" marker-end="url(#arrow)"/>
+<rect x="394" y="300" width="342" height="113" rx="14" fill="#ffffff" stroke="#c5d7e2"/>
+<text x="412" y="332" font-size="22" font-weight="700">输出</text>
+<text x="412" y="365" font-size="18">地址单元格、执行日志</text>
+<text x="412" y="392" font-size="18">店铺表格、聊天气泡</text>
+<line x1="561" y1="263" x2="561" y2="290" stroke="#517389" stroke-width="3" marker-end="url(#arrow)"/>
+<line x1="42" y1="451" x2="1158" y2="451" stroke="#c5d7e2" stroke-dasharray="8 6"/>
+<rect x="42" y="491" width="282" height="126" rx="14" fill="#e5f4ef" stroke="#c5d7e2"/>
+<text x="60" y="523" font-size="22" font-weight="700">原始Excel</text>
+<text x="60" y="556" font-size="18">利用记录 + 降水量</text>
+<text x="60" y="583" font-size="18">保留原文件</text>
+<rect x="394" y="491" width="342" height="126" rx="14" fill="#e9f0fd" stroke="#c5d7e2"/>
+<text x="412" y="523" font-size="22" font-weight="700">本机Python / Excel</text>
+<text x="412" y="556" font-size="18">分组、计数、平均、连接</text>
+<text x="412" y="583" font-size="18">pandas / 数据透视表</text>
+<rect x="806" y="491" width="352" height="126" rx="14" fill="#fff1dc" stroke="#c5d7e2"/>
+<text x="824" y="523" font-size="22" font-weight="700">图表与报告</text>
+<text x="824" y="556" font-size="18">matplotlib生成图片</text>
+<text x="824" y="583" font-size="18">放入Word或PowerPoint</text>
+<line x1="331" y1="552" x2="381" y2="552" stroke="#517389" stroke-width="3" marker-end="url(#arrow)"/>
+<line x1="744" y1="552" x2="794" y2="552" stroke="#517389" stroke-width="3" marker-end="url(#arrow)"/>
+<text x="42" y="662" font-size="18" fill="#526c7d">销售汇总技能：按保存的指令重新读取表格；它与这里的 .gs 脚本不是同一种文件。</text>
+</g></svg>

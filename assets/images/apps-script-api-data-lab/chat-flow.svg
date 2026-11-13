@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="770" viewBox="0 0 1200 770" role="img" aria-label="一条聊天消息怎样往返">
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#517389"/></marker></defs>
+<rect width="1200" height="770" rx="20" fill="#f3f7fa"/>
+<g font-family="Microsoft YaHei, Noto Sans CJK SC, sans-serif" fill="#18364a">
+<text x="42" y="53" font-size="29" font-weight="700">一条聊天消息怎样往返</text>
+<text x="42" y="87" font-size="18" fill="#526c7d">HTML中的JavaScript控制界面；Code.gs在服务器上读取配置并请求Gemini。</text>
+<rect x="42" y="120" width="320" height="99" rx="14" fill="#e5f4ef" stroke="#c5d7e2"/>
+<text x="60" y="152" font-size="22" font-weight="700">浏览器 · index.html</text>
+<text x="60" y="185" font-size="18">输入框、气泡、chatHistory</text>
+<rect x="441" y="120" width="320" height="99" rx="14" fill="#e9f0fd" stroke="#c5d7e2"/>
+<text x="459" y="152" font-size="22" font-weight="700">Apps Script · Code.gs</text>
+<text x="459" y="185" font-size="18">脚本属性中的密钥留在这里</text>
+<rect x="840" y="120" width="318" height="99" rx="14" fill="#fff1dc" stroke="#c5d7e2"/>
+<text x="858" y="152" font-size="22" font-weight="700">Gemini API</text>
+<text x="858" y="185" font-size="18">读取提示词和历史，生成内容</text>
+<line x1="202" y1="235" x2="202" y2="657" stroke="#c5d7e2" stroke-width="2" stroke-dasharray="7 5"/>
+<line x1="601" y1="235" x2="601" y2="657" stroke="#c5d7e2" stroke-width="2" stroke-dasharray="7 5"/>
+<line x1="999" y1="235" x2="999" y2="657" stroke="#c5d7e2" stroke-width="2" stroke-dasharray="7 5"/>
+<line x1="202" y1="285" x2="594" y2="285" stroke="#517389" stroke-width="3" marker-end="url(#arrow)"/>
+<text x="223" y="270" font-size="18">① 消息 + 历史 · 异步调用</text>
+<line x1="601" y1="369" x2="992" y2="369" stroke="#517389" stroke-width="3" marker-end="url(#arrow)"/>
+<text x="620" y="354" font-size="18">② POST · 指令 + contents</text>
+<line x1="999" y1="459" x2="609" y2="459" stroke="#517389" stroke-width="3" marker-end="url(#arrow)"/>
+<text x="630" y="443" font-size="18">③ JSON · candidates / content</text>
+<line x1="601" y1="557" x2="210" y2="557" stroke="#517389" stroke-width="3" marker-end="url(#arrow)"/>
+<text x="223" y="541" font-size="18">④ reply + newHistory</text>
+<rect x="42" y="605" width="320" height="99" rx="14" fill="#ffffff" stroke="#c5d7e2"/>
+<text x="60" y="637" font-size="22" font-weight="700">成功回调</text>
+<text x="60" y="670" font-size="18">显示回复，保存新历史</text>
+<text x="441" y="643" font-size="19">失败：进入失败回调，恢复按钮并显示错误。</text>
+<text x="441" y="678" font-size="19">刷新：浏览器变量重置，不等于长期记忆。</text>
+<text x="42" y="742" font-size="17" fill="#526c7d">图为逻辑示意；前后端变量不会自动共享，需要通过参数与返回值传递。</text>
+</g></svg>
