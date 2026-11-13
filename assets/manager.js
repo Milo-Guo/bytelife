@@ -44,6 +44,8 @@
     $('manager-connect').disabled = busy;
     $('manager-connect').textContent = managed ? '同步设置' : login ? `已连接 ${login} · 断开` : '连接 GitHub';
     document.querySelector('.manager-grid').inert = busy;
+    // 自动保存可能在用户刚打开下一个弹窗时开始，暂时锁住弹窗以免覆盖后续输入。
+    dialog.inert = busy;
     $('manager-reload').disabled = busy;
     $('manager-export').disabled = busy;
   }
@@ -72,7 +74,12 @@
   }
   function changed() {
     save(); render();
-    if (managed) { clearTimeout(autoSaveTimer); autoSaveTimer = setTimeout(() => { if (dirty() && !busy) publish(); }, 700); }
+    if (managed) { clearTimeout(autoSaveTimer); autoSaveTimer = setTimeout(autoSave, 700); }
+  }
+  function autoSave() {
+    if (!dirty() || busy) return;
+    if (dialog.open) { autoSaveTimer = setTimeout(autoSave, 700); return; }
+    publish();
   }
   function visibleArticles() {
     const q = $('manager-search').value.trim().toLocaleLowerCase();
