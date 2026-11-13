@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="685" viewBox="0 0 1200 685" role="img" aria-label="VR 相机既跟着整体走，也跟着头部转">
+<title>VR 相机既跟着整体走，也跟着头部转</title>
+<desc>父子关系示意：本课把 XR Origin 放在 Player 下；具体子物体名依预制体版本而异。；这是解释技术关系的整理图，不是软件截图。</desc>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#6d849f"/></marker></defs>
+<rect width="1200" height="685" fill="#f7fafe"/>
+<text x="48" y="56" font-family="Microsoft YaHei, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="34" font-weight="700" fill="#18304b" text-anchor="start">VR 相机既跟着整体走，也跟着头部转</text>
+<text x="48" y="96" font-family="Microsoft YaHei, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="23" font-weight="400" fill="#4c6077" text-anchor="start">父子关系示意：本课把 XR Origin 放在 Player 下；具体子物体名依预制体版本而异。</text>
+<path d="M 245,270 L 292,270" fill="none" stroke="#6d849f" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<path d="M 535,270 L 582,270" fill="none" stroke="#6d849f" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<path d="M 830,270 L 855,270 L 855,208 L 877,208" fill="none" stroke="#6d849f" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<path d="M 830,270 L 855,270 L 855,388 L 877,388" fill="none" stroke="#6d849f" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<rect x="45" y="205" width="200" height="130" rx="18" fill="#eaf2ff" stroke="#d3dfec" stroke-width="2"/>
+<rect x="45" y="225" width="5" height="90" rx="2" fill="#245ca5"/>
+<text x="145.0" y="248" font-family="Microsoft YaHei, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="27" font-weight="700" fill="#245ca5" text-anchor="middle">Player</text>
+<text x="145.0" y="286" font-family="Microsoft YaHei, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="21" font-weight="400" fill="#18304b" text-anchor="middle">课堂人物父物体</text>
+<text x="145.0" y="318" font-family="Microsoft YaHei, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="21" font-weight="400" fill="#18304b" text-anchor="middle">决定整体运动</text>
+<rect x="300" y="205" width="235" height="130" rx="18" fill="#e9f7f2" stroke="#d3dfec" stroke-width="2"/>
+<rect x="300" y="225" width="5" height="90" rx="2" fill="#19766c"/>
+<text x="417.5" y="248" font-family="Microsoft YaHei, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="27" font-weight="700" fill="#19766c" text-anchor="middle">XR Origin</text>
+<text x="417.5" y="286" font-family="Microsoft YaHei, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="20" font-weight="400" fill="#18304b" text-anchor="middle">追踪空间的原点</text>
+<text x="417.5" y="318" font-family="Microsoft YaHei, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="20" font-weight="400" fill="#18304b" text-anchor="middle">把设备坐标接入场景</text>
+<rect x="590" y="205" width="240" height="130" rx="18" fill="#ffffff" stroke="#d3dfec" stroke-width="2"/>
+<rect x="590" y="225" width="5" height="90" rx="2" fill="#19766c"/>
+<text x="710.0" y="248" font-family="Microsoft YaHei, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="24" font-weight="700" fill="#19766c" text-anchor="middle">Camera Offset</text>
+<text x="710.0" y="286" font-family="Microsoft YaHei, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="20" font-weight="400" fill="#18304b" text-anchor="middle">相机与控制器的父级</text>
+<text x="710.0" y="318" font-family="Microsoft YaHei, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="20" font-weight="400" fill="#18304b" text-anchor="middle">处理高度等偏移</text>
+<rect x="885" y="145" width="270" height="130" rx="18" fill="#fff3e1" stroke="#d3dfec" stroke-width="2"/>
+<rect x="885" y="165" width="5" height="90" rx="2" fill="#9b5c17"/>
+<text x="1020.0" y="188" font-family="Microsoft YaHei, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="24" font-weight="700" fill="#9b5c17" text-anchor="middle">Tracked Camera</text>
+<text x="1020.0" y="226" font-family="Microsoft YaHei, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="21" font-weight="400" fill="#18304b" text-anchor="middle">读取头显局部姿态</text>
+<text x="1020.0" y="258" font-family="Microsoft YaHei, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="21" font-weight="400" fill="#18304b" text-anchor="middle">转头时更新视线</text>
+<rect x="885" y="325" width="270" height="130" rx="18" fill="#fff3e1" stroke="#d3dfec" stroke-width="2"/>
+<rect x="885" y="345" width="5" height="90" rx="2" fill="#9b5c17"/>
+<text x="1020.0" y="368" font-family="Microsoft YaHei, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="25" font-weight="700" fill="#9b5c17" text-anchor="middle">左右控制器</text>
+<text x="1020.0" y="406" font-family="Microsoft YaHei, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="21" font-weight="400" fill="#18304b" text-anchor="middle">读取手柄局部姿态</text>
+<text x="1020.0" y="438" font-family="Microsoft YaHei, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="21" font-weight="400" fill="#18304b" text-anchor="middle">动作与按键来自设备</text>
+<rect x="45" y="490" width="1110" height="115" rx="18" fill="#eef3fb" stroke="#d3dfec" stroke-width="2"/>
+<text x="600" y="533" font-family="Microsoft YaHei, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="27" font-weight="700" fill="#245ca5" text-anchor="middle">世界姿态 = 父级变换 × 设备追踪的局部姿态</text>
+<text x="600" y="576" font-family="Microsoft YaHei, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="22" font-weight="400" fill="#4c6077" text-anchor="middle">移动 Origin 会带动整套坐标框架；头部转动仍由追踪系统持续更新。</text>
+<line x1="48" y1="642" x2="1152" y2="642" stroke="#cad8e7" stroke-width="2"/>
+<text x="48" y="668" font-family="Microsoft YaHei, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="16" font-weight="400" fill="#4c6077" text-anchor="start">ByteLife · Unity VR / AR 课程整理图</text>
+</svg>

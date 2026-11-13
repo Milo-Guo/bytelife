@@ -1,5 +1,15 @@
 [
   {
+    "slug": "unity-vr-ar-lab",
+    "title": "Unity VR／AR 实习完整拆解：读懂现成工程、人物移动、相机与点击放置",
+    "category": "编程",
+    "type": "tutorial",
+    "author": "milo",
+    "summary": "从11月6日课堂工程出发，拆解GameObject、Prefab、地形、人物控制、相机跟随、OpenXR、ARCore与Android构建。附7张原创关系图、PlaceOnPlane完整代码解析、5个练习和排错清单，并校正课件中的版本差异。",
+    "created": "2026-11-13",
+    "updated": "2026-11-13"
+  },
+  {
     "slug": "ai-integration-acceptance",
     "title": "AI 编程实操：分层规则、跨端接线与并发验收，附 18 幅课堂图",
     "category": "CS",

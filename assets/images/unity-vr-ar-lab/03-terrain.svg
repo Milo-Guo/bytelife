@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="665" viewBox="0 0 1200 665" role="img" aria-label="建地形与上颜色，修改的是不同数据">
+<title>建地形与上颜色，修改的是不同数据</title>
+<desc>Terrain 的山有多高，与表面贴了什么纹理，需要分开理解。；这是解释技术关系的整理图，不是软件截图。</desc>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#6d849f"/></marker></defs>
+<rect width="1200" height="665" fill="#f7fafe"/>
+<text x="48" y="56" font-family="Microsoft YaHei, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="34" font-weight="700" fill="#18304b" text-anchor="start">建地形与上颜色，修改的是不同数据</text>
+<text x="48" y="96" font-family="Microsoft YaHei, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="23" font-weight="400" fill="#4c6077" text-anchor="start">Terrain 的山有多高，与表面贴了什么纹理，需要分开理解。</text>
+<rect x="55" y="145" width="515" height="394" rx="18" fill="#eaf2ff" stroke="#d3dfec" stroke-width="2"/>
+<rect x="630" y="145" width="515" height="394" rx="18" fill="#e9f7f2" stroke="#d3dfec" stroke-width="2"/>
+<text x="312" y="190" font-family="Microsoft YaHei, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="28" font-weight="700" fill="#245ca5" text-anchor="middle">改形状：高度数据</text>
+<text x="887" y="190" font-family="Microsoft YaHei, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="28" font-weight="700" fill="#19766c" text-anchor="middle">改表面：Terrain Layers</text>
+<path d="M 95 330 L 150 315 L 215 240 L 270 295 L 325 222 L 395 292 L 465 315 L 530 330 L 530 348 L 95 348 Z" fill="#9bbde9" stroke="#245ca5" stroke-width="3"/>
+<line x1="95" y1="348" x2="530" y2="348" stroke="#8eabc9" stroke-width="3"/>
+<text x="312" y="395" font-family="Microsoft YaHei, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="21" font-weight="700" fill="#245ca5" text-anchor="middle">Raise / Lower · Set Height · Smooth</text>
+<text x="312" y="438" font-family="Microsoft YaHei, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="24" font-weight="400" fill="#4c6077" text-anchor="middle">笔刷改变各位置的高度</text>
+<text x="312" y="479" font-family="Microsoft YaHei, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="22" font-weight="400" fill="#4c6077" text-anchor="middle">山峰、低地、坡面由此形成</text>
+<path d="M 675 302 L 1015 255 L 1100 315 L 760 362 Z" fill="#8eb876" stroke="#19766c" stroke-width="3"/>
+<path d="M 798 285 L 866 276 L 951 336 L 883 345 Z" fill="#d5c28e"/>
+<path d="M 954 263 L 1015 255 L 1100 315 L 1039 324 Z" fill="#a6aaa4"/>
+<text x="887" y="395" font-family="Microsoft YaHei, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="25" font-weight="700" fill="#19766c" text-anchor="middle">Paint Texture</text>
+<text x="887" y="438" font-family="Microsoft YaHei, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="22" font-weight="400" fill="#4c6077" text-anchor="middle">笔刷改变草、土、石等图层权重</text>
+<text x="887" y="479" font-family="Microsoft YaHei, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="23" font-weight="400" fill="#4c6077" text-anchor="middle">涂草地不会把高山变平</text>
+<text x="600" y="588" font-family="Microsoft YaHei, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="22" font-weight="400" fill="#4c6077" text-anchor="middle">同一块 Terrain 上：高度塑形和表面涂色是两套可分别编辑的数据。</text>
+<line x1="48" y1="622" x2="1152" y2="622" stroke="#cad8e7" stroke-width="2"/>
+<text x="48" y="648" font-family="Microsoft YaHei, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="16" font-weight="400" fill="#4c6077" text-anchor="start">ByteLife · Unity VR / AR 课程整理图</text>
+</svg>

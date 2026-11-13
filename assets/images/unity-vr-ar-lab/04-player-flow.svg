@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="715" viewBox="0 0 1200 715" role="img" aria-label="按下键之后，人物为什么会动">
+<title>按下键之后，人物为什么会动</title>
+<desc>以本课 Query-Chan 现成控制器为例：移动、动画和相机各有职责。；这是解释技术关系的整理图，不是软件截图。</desc>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#6d849f"/></marker></defs>
+<rect width="1200" height="715" fill="#f7fafe"/>
+<text x="48" y="56" font-family="Microsoft YaHei, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="34" font-weight="700" fill="#18304b" text-anchor="start">按下键之后，人物为什么会动</text>
+<text x="48" y="96" font-family="Microsoft YaHei, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="23" font-weight="400" fill="#4c6077" text-anchor="start">以本课 Query-Chan 现成控制器为例：移动、动画和相机各有职责。</text>
+<path d="M 330,210 L 417,210" fill="none" stroke="#6d849f" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<path d="M 765,210 L 862,210" fill="none" stroke="#6d849f" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<path d="M 595,275 L 595,350" fill="none" stroke="#6d849f" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<path d="M 1000,275 L 1000,350" fill="none" stroke="#6d849f" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<path d="M 765,250 L 810,250 L 810,414 L 862,414" fill="none" stroke="#6d849f" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<path d="M 435,408 L 338,408" fill="none" stroke="#6d849f" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<path d="M 1000,472 L 1000,530" fill="none" stroke="#6d849f" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<rect x="55" y="145" width="275" height="130" rx="18" fill="#eaf2ff" stroke="#d3dfec" stroke-width="2"/>
+<rect x="55" y="165" width="5" height="90" rx="2" fill="#245ca5"/>
+<text x="192.5" y="188" font-family="Microsoft YaHei, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="26" font-weight="700" fill="#245ca5" text-anchor="middle">Input 输入</text>
+<text x="192.5" y="226" font-family="Microsoft YaHei, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="21" font-weight="400" fill="#18304b" text-anchor="middle">W/S 前后 · A/D 转身</text>
+<text x="192.5" y="258" font-family="Microsoft YaHei, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="21" font-weight="400" fill="#18304b" text-anchor="middle">Shift 跑 · Jump 跳</text>
+<rect x="425" y="145" width="340" height="130" rx="18" fill="#ffffff" stroke="#d3dfec" stroke-width="2"/>
+<rect x="425" y="165" width="5" height="90" rx="2" fill="#245ca5"/>
+<text x="595.0" y="188" font-family="Microsoft YaHei, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="26" font-weight="700" fill="#245ca5" text-anchor="middle">移动脚本</text>
+<text x="595.0" y="226" font-family="Microsoft YaHei, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="20" font-weight="400" fill="#18304b" text-anchor="middle">QueryLocomotionController</text>
+<text x="595.0" y="258" font-family="Microsoft YaHei, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="20" font-weight="400" fill="#18304b" text-anchor="middle">读取输入、计算运动与状态</text>
+<rect x="870" y="145" width="275" height="130" rx="18" fill="#e9f7f2" stroke="#d3dfec" stroke-width="2"/>
+<rect x="870" y="165" width="5" height="90" rx="2" fill="#19766c"/>
+<text x="1007.5" y="188" font-family="Microsoft YaHei, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="22" font-weight="700" fill="#19766c" text-anchor="middle">CharacterController</text>
+<text x="1007.5" y="226" font-family="Microsoft YaHei, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="21" font-weight="400" fill="#18304b" text-anchor="middle">Move：按位移量移动</text>
+<text x="1007.5" y="258" font-family="Microsoft YaHei, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="21" font-weight="400" fill="#18304b" text-anchor="middle">遇到碰撞时限制运动</text>
+<rect x="435" y="355" width="320" height="117" rx="18" fill="#fff3e1" stroke="#d3dfec" stroke-width="2"/>
+<rect x="435" y="375" width="5" height="77" rx="2" fill="#9b5c17"/>
+<text x="595.0" y="398" font-family="Microsoft YaHei, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="25" font-weight="700" fill="#9b5c17" text-anchor="middle">Animator 动画系统</text>
+<text x="595.0" y="436" font-family="Microsoft YaHei, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="20" font-weight="400" fill="#18304b" text-anchor="middle">按状态播放站立、走、跑、跳</text>
+<rect x="55" y="355" width="275" height="117" rx="18" fill="#ffffff" stroke="#d3dfec" stroke-width="2"/>
+<rect x="55" y="375" width="5" height="77" rx="2" fill="#9b5c17"/>
+<text x="192.5" y="398" font-family="Microsoft YaHei, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="25" font-weight="700" fill="#9b5c17" text-anchor="middle">骨骼与可见模型</text>
+<text x="192.5" y="436" font-family="Microsoft YaHei, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="20" font-weight="400" fill="#18304b" text-anchor="middle">人物看起来在走路或跳跃</text>
+<rect x="870" y="355" width="275" height="117" rx="18" fill="#ffffff" stroke="#d3dfec" stroke-width="2"/>
+<rect x="870" y="375" width="5" height="77" rx="2" fill="#19766c"/>
+<text x="1007.5" y="398" font-family="Microsoft YaHei, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="21" font-weight="700" fill="#19766c" text-anchor="middle">Player 的 Transform</text>
+<text x="1007.5" y="436" font-family="Microsoft YaHei, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="21" font-weight="400" fill="#18304b" text-anchor="middle">位置和朝向发生变化</text>
+<rect x="870" y="535" width="275" height="98" rx="18" fill="#eaf2ff" stroke="#d3dfec" stroke-width="2"/>
+<rect x="870" y="555" width="5" height="58" rx="2" fill="#245ca5"/>
+<text x="1007.5" y="578" font-family="Microsoft YaHei, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="25" font-weight="700" fill="#245ca5" text-anchor="middle">相机跟随</text>
+<text x="1007.5" y="616" font-family="Microsoft YaHei, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="20" font-weight="400" fill="#18304b" text-anchor="middle">按目标位置更新镜头</text>
+<text x="55" y="546" font-family="Microsoft YaHei, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="24" font-weight="400" fill="#4c6077" text-anchor="start">移动与动画分工：</text>
+<text x="55" y="583" font-family="Microsoft YaHei, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="22" font-weight="400" fill="#4c6077" text-anchor="start">Controller 负责位置；Animator 主要负责动作表现。</text>
+<text x="55" y="620" font-family="Microsoft YaHei, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="22" font-weight="400" fill="#4c6077" text-anchor="start">本课现成控制器的 A/D 是转身，不是左右平移。</text>
+<text x="615" y="324" font-family="Microsoft YaHei, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="18" font-weight="400" fill="#4c6077" text-anchor="start">动作状态</text>
+<text x="797" y="310" font-family="Microsoft YaHei, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="18" font-weight="400" fill="#4c6077" text-anchor="end">A/D 转身</text>
+<text x="1040" y="513" font-family="Microsoft YaHei, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="18" font-weight="400" fill="#4c6077" text-anchor="start">目标位置</text>
+<line x1="48" y1="672" x2="1152" y2="672" stroke="#cad8e7" stroke-width="2"/>
+<text x="48" y="698" font-family="Microsoft YaHei, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="16" font-weight="400" fill="#4c6077" text-anchor="start">ByteLife · Unity VR / AR 课程整理图</text>
+</svg>

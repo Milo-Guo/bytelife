@@ -1,0 +1,23 @@
+{
+  "lesson_date": "2026-11-06",
+  "notes_date": "2026-11-13",
+  "unity_editor": "6000.3.12f1",
+  "vr": {
+    "com.unity.xr.interaction.toolkit": "3.3.2",
+    "com.unity.xr.openxr": "1.16.1",
+    "com.unity.xr.management": "4.5.4"
+  },
+  "ar": {
+    "com.unity.xr.arfoundation": "6.3.5",
+    "com.unity.xr.arcore": "6.3.5",
+    "com.unity.xr.management": "4.5.4",
+    "minimum_android_api": 25,
+    "scripting_backend": "IL2CPP",
+    "architecture": "ARM64",
+    "graphics_api": "OpenGLES3",
+    "arcore_requirement": "Required",
+    "depth_requirement": "Optional",
+    "historical_input_handling": "Both"
+  },
+  "note_zh": "这是原课程工程的核对记录，不是安装脚本。Both为历史兼容设置，当前Android文档标注不支持，新项目应统一输入方案并验证。"
+}

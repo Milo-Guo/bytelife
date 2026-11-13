@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="705" viewBox="0 0 1200 705" role="img" aria-label="导出时，先看目标设备要运行什么">
+<title>导出时，先看目标设备要运行什么</title>
+<desc>Build 把场景、资源和代码转换成指定平台能运行的产物。；这是解释技术关系的整理图，不是软件截图。</desc>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#6d849f"/></marker></defs>
+<rect width="1200" height="705" fill="#f7fafe"/>
+<text x="48" y="56" font-family="Microsoft YaHei, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="34" font-weight="700" fill="#18304b" text-anchor="start">导出时，先看目标设备要运行什么</text>
+<text x="48" y="96" font-family="Microsoft YaHei, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="23" font-weight="400" fill="#4c6077" text-anchor="start">Build 把场景、资源和代码转换成指定平台能运行的产物。</text>
+<path d="M 410,316 L 490,316 L 490,227 L 582,227" fill="none" stroke="#6d849f" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<path d="M 410,316 L 490,316 L 490,471 L 582,471" fill="none" stroke="#6d849f" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<rect x="55" y="220" width="355" height="191" rx="18" fill="#eaf2ff" stroke="#d3dfec" stroke-width="2"/>
+<rect x="55" y="240" width="5" height="151" rx="2" fill="#245ca5"/>
+<text x="232.5" y="263" font-family="Microsoft YaHei, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="30" font-weight="700" fill="#245ca5" text-anchor="middle">Unity 工程</text>
+<text x="232.5" y="301" font-family="Microsoft YaHei, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="21" font-weight="400" fill="#18304b" text-anchor="middle">Assets + Packages</text>
+<text x="232.5" y="333" font-family="Microsoft YaHei, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="21" font-weight="400" fill="#18304b" text-anchor="middle">ProjectSettings</text>
+<text x="232.5" y="365" font-family="Microsoft YaHei, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="21" font-weight="400" fill="#18304b" text-anchor="middle">Scene List 决定打包哪些场景</text>
+<rect x="590" y="145" width="555" height="185" rx="18" fill="#e9f7f2" stroke="#d3dfec" stroke-width="2"/>
+<rect x="590" y="165" width="5" height="145" rx="2" fill="#19766c"/>
+<text x="867.5" y="188" font-family="Microsoft YaHei, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="29" font-weight="700" fill="#19766c" text-anchor="middle">Windows 构建文件夹</text>
+<text x="867.5" y="226" font-family="Microsoft YaHei, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="23" font-weight="400" fill="#18304b" text-anchor="middle">程序.exe + 程序_Data + 依赖文件</text>
+<text x="867.5" y="258" font-family="Microsoft YaHei, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="23" font-weight="400" fill="#18304b" text-anchor="middle">课堂 PC VR：复制完整输出文件夹</text>
+<text x="867.5" y="290" font-family="Microsoft YaHei, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="23" font-weight="400" fill="#18304b" text-anchor="middle">在配好 VR 运行时的电脑上运行</text>
+<rect x="590" y="390" width="555" height="185" rx="18" fill="#fff3e1" stroke="#d3dfec" stroke-width="2"/>
+<rect x="590" y="410" width="5" height="145" rx="2" fill="#9b5c17"/>
+<text x="867.5" y="433" font-family="Microsoft YaHei, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="29" font-weight="700" fill="#9b5c17" text-anchor="middle">Android APK</text>
+<text x="867.5" y="471" font-family="Microsoft YaHei, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="23" font-weight="400" fill="#18304b" text-anchor="middle">本课使用 ARM64 + IL2CPP</text>
+<text x="867.5" y="503" font-family="Microsoft YaHei, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="23" font-weight="400" fill="#18304b" text-anchor="middle">复制 APK 到手机，并完成安装</text>
+<text x="867.5" y="535" font-family="Microsoft YaHei, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="23" font-weight="400" fill="#18304b" text-anchor="middle">运行时授权相机，再扫描并点击放置</text>
+<text x="470" y="199" font-family="Microsoft YaHei, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="18" font-weight="400" fill="#4c6077" text-anchor="middle">Windows</text>
+<text x="470" y="509" font-family="Microsoft YaHei, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="18" font-weight="400" fill="#4c6077" text-anchor="middle">Android</text>
+<text x="600" y="630" font-family="Microsoft YaHei, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="22" font-weight="400" fill="#4c6077" text-anchor="middle">工程用于继续编辑；构建产物用于在目标设备上运行。两者不是同一种文件。</text>
+<line x1="48" y1="662" x2="1152" y2="662" stroke="#cad8e7" stroke-width="2"/>
+<text x="48" y="688" font-family="Microsoft YaHei, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="16" font-weight="400" fill="#4c6077" text-anchor="start">ByteLife · Unity VR / AR 课程整理图</text>
+</svg>

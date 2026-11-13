@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="665" viewBox="0 0 1200 665" role="img" aria-label="老师给的是模板，场景里用的是实例">
+<title>老师给的是模板，场景里用的是实例</title>
+<desc>GameObject 是对象容器；Prefab 保存可重复使用的对象配置。；这是解释技术关系的整理图，不是软件截图。</desc>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#6d849f"/></marker></defs>
+<rect width="1200" height="665" fill="#f7fafe"/>
+<text x="48" y="56" font-family="Microsoft YaHei, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="34" font-weight="700" fill="#18304b" text-anchor="start">老师给的是模板，场景里用的是实例</text>
+<text x="48" y="96" font-family="Microsoft YaHei, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="23" font-weight="400" fill="#4c6077" text-anchor="start">GameObject 是对象容器；Prefab 保存可重复使用的对象配置。</text>
+<path d="M 365,238 L 432,238" fill="none" stroke="#6d849f" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<path d="M 755,238 L 822,238" fill="none" stroke="#6d849f" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<rect x="55" y="165" width="310" height="150" rx="18" fill="#eaf2ff" stroke="#d3dfec" stroke-width="2"/>
+<rect x="55" y="185" width="5" height="110" rx="2" fill="#245ca5"/>
+<text x="210.0" y="208" font-family="Microsoft YaHei, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="26" font-weight="700" fill="#245ca5" text-anchor="middle">Project：Prefab 资源</text>
+<text x="210.0" y="246" font-family="Microsoft YaHei, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="22" font-weight="400" fill="#18304b" text-anchor="middle">保存在工程里的模板</text>
+<text x="210.0" y="278" font-family="Microsoft YaHei, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="22" font-weight="400" fill="#18304b" text-anchor="middle">描述对象、子物体与组件</text>
+<rect x="435" y="165" width="320" height="150" rx="18" fill="#e9f7f2" stroke="#d3dfec" stroke-width="2"/>
+<rect x="435" y="185" width="5" height="110" rx="2" fill="#19766c"/>
+<text x="595.0" y="208" font-family="Microsoft YaHei, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="26" font-weight="700" fill="#19766c" text-anchor="middle">Hierarchy：场景实例</text>
+<text x="595.0" y="246" font-family="Microsoft YaHei, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="22" font-weight="400" fill="#18304b" text-anchor="middle">把模板拖进 Scene</text>
+<text x="595.0" y="278" font-family="Microsoft YaHei, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="22" font-weight="400" fill="#18304b" text-anchor="middle">实例拥有自己的位置和状态</text>
+<rect x="825" y="145" width="320" height="383" rx="18" fill="#ffffff" stroke="#d3dfec" stroke-width="2"/>
+<text x="985" y="190" font-family="Microsoft YaHei, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="26" font-weight="700" fill="#245ca5" text-anchor="middle">Inspector：组件</text>
+<line x1="847" y1="212" x2="1123" y2="212" stroke="#cad8e7" stroke-width="2"/>
+<text x="847" y="250" font-family="Microsoft YaHei, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="25" font-weight="700" fill="#18304b" text-anchor="start">Transform</text>
+<text x="847" y="282" font-family="Microsoft YaHei, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="22" font-weight="400" fill="#4c6077" text-anchor="start">位置、旋转、缩放</text>
+<text x="847" y="330" font-family="Microsoft YaHei, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="23" font-weight="700" fill="#18304b" text-anchor="start">Renderer / Animator</text>
+<text x="847" y="362" font-family="Microsoft YaHei, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="22" font-weight="400" fill="#4c6077" text-anchor="start">显示模型 / 播放动画</text>
+<text x="847" y="410" font-family="Microsoft YaHei, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="23" font-weight="700" fill="#18304b" text-anchor="start">Controller / Script</text>
+<text x="847" y="442" font-family="Microsoft YaHei, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="22" font-weight="400" fill="#4c6077" text-anchor="start">碰撞移动 / 自定义行为</text>
+<text x="847" y="492" font-family="Microsoft YaHei, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="21" font-weight="400" fill="#4c6077" text-anchor="start">组件组合成对象的能力</text>
+<rect x="55" y="380" width="700" height="148" rx="18" fill="#fff8ec" stroke="#ead8ba" stroke-width="2"/>
+<text x="85" y="424" font-family="Microsoft YaHei, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="27" font-weight="700" fill="#9b5c17" text-anchor="start">Prefab ≠ 只有一个 3D 模型文件</text>
+<text x="85" y="463" font-family="Microsoft YaHei, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="22" font-weight="400" fill="#4c6077" text-anchor="start">现成人物通常已经接好模型、骨骼、动画和脚本。</text>
+<text x="85" y="498" font-family="Microsoft YaHei, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="22" font-weight="400" fill="#4c6077" text-anchor="start">修改场景实例不会自动把所有修改写回模板。</text>
+<text x="600" y="586" font-family="Microsoft YaHei, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="22" font-weight="400" fill="#4c6077" text-anchor="middle">保存 Scene 保存场景安排；Prefab Apply 才把对应修改应用到模板。</text>
+<line x1="48" y1="622" x2="1152" y2="622" stroke="#cad8e7" stroke-width="2"/>
+<text x="48" y="648" font-family="Microsoft YaHei, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="16" font-weight="400" fill="#4c6077" text-anchor="start">ByteLife · Unity VR / AR 课程整理图</text>
+</svg>
