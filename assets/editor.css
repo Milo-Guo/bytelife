@@ -113,3 +113,11 @@ body.editor-page { height: 100vh; height: 100dvh; overflow: hidden; }
   .ed-fields { grid-template-columns: minmax(0, 1fr); }
   .ed-meta input, .ed-meta select, .ed-meta textarea { font-size: 16px; }
 }
+/* 标签选择沿用写作页的紧凑布局。 */
+.ed-labels { min-width: 0; padding: 0; margin: 0; border: 0; }
+.ed-labels legend { margin-bottom: 8px; color: var(--muted); font-size: 12px; }
+.ed-labels .tag-option { display: inline-flex; flex-direction: row; align-items: center; }
+.ed-fields > .ed-labels, .ed-fields > .ed-title { grid-column: 1 / -1; }
+.ed-labels input[type="checkbox"] { width: 15px; height: 15px; margin: 0; }
+.ed-label-actions { display: flex; gap: 16px; margin-top: 8px; font-size: 12px; }
+.ed-label-actions a { color: var(--accent); }

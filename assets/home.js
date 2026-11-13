@@ -92,10 +92,10 @@
     status.textContent = '转换完成。';
   });
 
-  // 桌面保持侧栏展开，手机首次进入收起；尺寸切换不重置同一尺寸下的用户选择。
-  const toolbox = document.querySelector('.home-toolbox');
+  // 标签默认可见；读者可用 summary 自行收起，切换屏幕尺寸时保留选择。
+  const extras = document.querySelector('.rail-extras');
   const compact = matchMedia('(width < 768px)');
-  const syncToolbox = () => { toolbox.open = !compact.matches; };
-  compact.addEventListener('change', syncToolbox);
-  syncToolbox();
+  const syncExtras = () => { extras.open = !compact.matches; };
+  compact.addEventListener('change', syncExtras);
+  syncExtras();
 })();

@@ -41,6 +41,56 @@ def render(markdown):
     return build.render(markdown)[0]
 
 
+class LabelManagementTest(unittest.TestCase):
+    def setUp(self):
+        self.previous = list(build.TAGS)
+        self.tags = [{'id': 'code', 'name': '编程', 'color': 'blue', 'aliases': ['CS']},
+                     {'id': 'notes', 'name': '课堂笔记', 'color': 'rose'}]
+        build.TAGS[:] = self.tags
+
+    def tearDown(self):
+        build.TAGS[:] = self.previous
+
+    def test_invalid_registry_is_rejected(self):
+        for invalid in ({}, [None], [{'id': '../bad', 'name': '测试', 'color': 'blue'}],
+                        [self.tags[0], self.tags[0]], [{**self.tags[0], 'name': '全部'}],
+                        [{**self.tags[0], 'color': 'red; background:url(evil)'}],
+                        [{**self.tags[0], 'aliases': [42]}], [{**self.tags[0], 'name': '字'*25}]):
+            with self.subTest(invalid=invalid), self.assertRaises(build.BuildError):
+                build.validate_tags(invalid)
+
+    def test_ids_and_legacy_category(self):
+        self.assertEqual(build.article_tag_ids({'category': 'CS'}), ['code'])
+        self.assertEqual(build.article_tag_ids({'category': 'CS', 'tags': []}), [])
+        self.assertEqual(build.article_tag_ids({'category': '陌生标签'}), [])
+        for ids in (None, 'code', ['missing'], ['code', 'code'], [{}]):
+            with self.subTest(ids=ids), self.assertRaises(build.BuildError):
+                build.article_tag_ids({'tags': ids})
+
+    def test_tag_text_and_embedded_json_are_inert(self):
+        build.TAGS[0] = {**self.tags[0], 'name': '</script><img src=x>'}
+        badge = build.tag_badges({'tags': ['code']}, link=True)
+        self.assertNotIn('<img', badge)
+        self.assertIn('?t=code', badge)
+        body = build.manager_page([{'slug': 'a', 'title': '</script><script>alert(1)</script>', 'tags': ['code']}])
+        self.assertNotIn('</script><script>', body)
+        blob = re.search(r'id="manager-data">(.*?)</script>', body, re.S)[1]
+        self.assertEqual(json.loads(blob)['tags'][0]['name'], '</script><img src=x>')
+
+    def test_management_csp_keeps_scripts_local_and_disables_tracking(self):
+        original = build.SITE_STATE.get('analytics_website_id', '')
+        try:
+            build.SITE_STATE['analytics_website_id'] = 'a' * 36
+            page = build.shell('标签', '描述', build.manager_page([]), 'labels/', noindex=True,
+                               page='page manage-page', csp=build.MANAGE_CSP)
+            self.assertNotIn('cloud.umami.is', page)
+            self.assertIn('https://api.github.com', page)
+            self.assertIn('trusted-types &#x27;none&#x27;', page)
+            self.assertNotIn('unsafe-inline', page)
+        finally:
+            build.SITE_STATE['analytics_website_id'] = original
+
+
 class SanitizeTest(unittest.TestCase):
     def assertInert(self, html):
         """输出里不能有脚本类标签、事件属性、style 属性或危险协议。"""
@@ -292,6 +342,17 @@ class NewArticleTest(unittest.TestCase):
         self.assertEqual((self.root/'content'/'taken.md').read_text(encoding='utf-8'), '别覆盖我')
         self.assertEqual(sorted(p.name for p in (self.root/'content').iterdir()), ['old-post.md', 'taken.md'])
         self.assertFalse((self.root/'evil.md').exists())
+
+    def test_creates_article_with_registered_tags(self):
+        tags = [{'id': 'code', 'name': '编程', 'color': 'blue'}, {'id': 'food', 'name': '做菜', 'color': 'orange'}]
+        (self.root/'tags.json').write_text(json.dumps(tags), encoding='utf-8')
+        catalog = json.loads(self.catalog_text())
+        catalog[0]['tags'] = ['code']
+        (self.root/'articles.json').write_text(json.dumps(catalog), encoding='utf-8')
+        new.create_article(self.meta(), self.root)
+        saved = json.loads(self.catalog_text())
+        self.assertEqual(saved[0], catalog[0])
+        self.assertEqual(saved[-1]['tags'], ['food'])
 
 
     def test_resolve_author(self):

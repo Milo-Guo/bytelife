@@ -44,6 +44,10 @@ def create_article(meta, root=build.ROOT, templates=TEMPLATES):
     raw = catalog_path.read_bytes().decode('utf-8')
     newline = '\r\n' if '\r\n' in raw else '\n'
     catalog = json.loads(raw)
+    tags_path = root/'tags.json'
+    tags = build.validate_tags(json.loads(tags_path.read_text(encoding='utf-8'))) if tags_path.exists() else []
+    if tags_path.exists():
+        meta = {**meta, 'tags': build.article_tag_ids(meta, tags)}
     if any(item.get('slug') == meta['slug'] for item in catalog):
         raise build.BuildError(f'articles.json 里已经有 slug「{meta["slug"]}」')
     path = root/'content'/f'{meta["slug"]}.md'
@@ -55,7 +59,7 @@ def create_article(meta, root=build.ROOT, templates=TEMPLATES):
     except FileExistsError:
         raise build.BuildError(f'content/{meta["slug"]}.md 已经存在，没有覆盖') from None
     try:
-        build.validate_articles(catalog+[meta], root/'content', authors=build.read_authors(root))
+        build.validate_articles(catalog+[meta], root/'content', authors=build.read_authors(root), tags=tags)
     except BaseException:
         path.unlink()
         raise
@@ -80,7 +84,7 @@ def main(argv=None):
     parser = argparse.ArgumentParser(description='新建一篇文章（登记为草稿，不会发布）。')
     parser.add_argument('--slug', help='英文文件名，也是网址的一部分，例如 tomato-egg')
     parser.add_argument('--title', help='文章标题')
-    parser.add_argument('--category', help='首页筛选用的分类，例如 编程、做菜')
+    parser.add_argument('--category', help='已有标签名称，例如 AI 编程、Windows；新标签请到网站标签管理页创建')
     parser.add_argument('--type', help='类型：'+build.TYPE_HINT)
     parser.add_argument('--summary', help='首页列表里显示的一句话摘要')
     parser.add_argument('--servings', help='食谱份量，例如“2 人份”（可选）')
@@ -102,7 +106,7 @@ def main(argv=None):
                             None if build.SLUG.match(v) and len(v) <= 80 and v not in slugs
                             else '已经有这个名字了' if v in slugs else '只能用小写英文、数字和连字符')
     title = args.title or ask('标题', check=lambda v: None if v else '标题不能为空')
-    category = args.category or ask(f'分类（已有：{"、".join(categories)}；也可以写新的）',
+    category = args.category or ask(f'分类（已有：{"、".join(categories)}；未登记的名称会显示为未分类）',
                                     check=lambda v: None if v and v != build.ALL else f'分类不能为空，也不能叫“{build.ALL}”')
     guess = 'recipe' if any(word in category for word in ('菜', '食', '烘焙')) else 'post' if category == '生活' else 'tutorial'
     kind = TYPE_NAMES.get(args.type or ask('类型：'+build.TYPE_HINT, build.TYPES[guess][0],

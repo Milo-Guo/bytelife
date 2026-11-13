@@ -17,6 +17,7 @@ import shutil
 import struct
 import subprocess
 import sys
+import unicodedata
 from urllib.parse import quote, unquote
 from xml.sax.saxutils import escape as xml_escape
 
@@ -55,8 +56,12 @@ CSP = '; '.join([
 # Trusted Types 策略把预览 HTML 写进页面。
 EDITOR_CSP = (CSP.replace("connect-src 'self'", "connect-src 'self' https://api.github.com")
               .replace("trusted-types 'none'", "trusted-types bytelife-preview"))
+MANAGE_CSP = CSP.replace("connect-src 'self'", "connect-src 'self' https://api.github.com")
 THEME_COLORS = {'light': '#f7f6f3', 'dark': '#131416'}
-ASSET_URLS = {name: BASE+'assets/'+name for name in ('site.css', 'site.js', 'home.js', 'editor.css', 'editor.js')}
+ASSET_NAMES = ('site.css', 'site.js', 'home.js', 'editor.css', 'editor.js', 'labels.js', 'manager.css', 'manager.js')
+ASSET_URLS = {name: BASE+'assets/'+name for name in ASSET_NAMES}
+TAG_COLORS = {'blue', 'teal', 'violet', 'orange', 'sky', 'green', 'rose', 'slate'}
+TAGS = []
 VENDOR_MARKDOWN_IT = 'vendor/markdown-it-14.3.3.min.js'
 # 写作页预览用的 markdown-it 前端版，取自 npm 官方包，文件哈希写在这里，check.py 会核对。
 VENDOR_HASHES = {VENDOR_MARKDOWN_IT: '494ba53db1aac9f676317dda7062bd9545b5f0bbe3f12b0ab1ab4f813825cfb0'}
@@ -562,7 +567,59 @@ def author_url(aid):
     return f'{BASE}authors/{aid}/'
 
 
-def validate_articles(data, content_dir=CONTENT, authors=None):
+def validate_tags(data):
+    """标签用稳定编号关联文章；显示名称和颜色允许随时修改。"""
+    if not isinstance(data, list) or len(data) > 200:
+        raise BuildError('tags.json：应为不超过 200 项的数组')
+    ids, names, tags = set(), set(), []
+    for tag in data:
+        if not isinstance(tag, dict):
+            raise BuildError('tags.json：标签应为对象')
+        tid, name, color = tag.get('id'), tag.get('name'), tag.get('color')
+        if not isinstance(tid, str) or not re.fullmatch(r'[a-z0-9]+(?:-[a-z0-9]+)*', tid) or len(tid) > 40 or tid in ids:
+            raise BuildError('tags.json：编号无效或重复')
+        name = unicodedata.normalize('NFC', name.strip()) if isinstance(name, str) else ''
+        if not 1 <= len(name) <= 24 or name in (ALL, '未分类') or name.lower() in names:
+            raise BuildError('tags.json：名称应为 1 至 24 字，不能重复或使用“全部”“未分类”')
+        if not isinstance(color, str) or color not in TAG_COLORS:
+            raise BuildError('tags.json：颜色必须使用预设名称')
+        aliases = tag.get('aliases', [])
+        if not isinstance(aliases, list) or any(not isinstance(a, str) or not a.strip() or len(a) > 24 for a in aliases):
+            raise BuildError('tags.json：旧名称记录无效')
+        ids.add(tid)
+        names.add(name.lower())
+        tags.append({**tag, 'name': name})
+    return tags
+
+
+def article_tag_ids(meta, tags=None):
+    tags = TAGS if tags is None else tags
+    if 'tags' in meta:
+        ids = meta['tags']
+        if (not isinstance(ids, list) or any(not isinstance(i, str) or i not in {t['id'] for t in tags} for i in ids)
+                or len(set(ids)) != len(ids)):
+            raise BuildError(f'articles.json：{meta.get("slug", "文章")} 引用了不存在或重复的标签')
+        return ids
+    direct = next(([t['id']] for t in tags if meta.get('category') == t['name']), None)
+    return direct if direct is not None else next(([t['id']] for t in tags if meta.get('category') in t.get('aliases', [])), [])
+
+
+def article_tags(meta):
+    return [t for tid in article_tag_ids(meta) for t in TAGS if t['id'] == tid]
+
+
+def tag_badge(tag, link=False):
+    attrs = f' href="{BASE}?t={quote(tag["id"])}"' if link else ''
+    element = 'a' if link else 'span'
+    return (f'<{element} class="tag-pill"{attrs}><span class="tag-dot" data-tag-color="{escape(tag["color"])}" '
+            f'aria-hidden="true"></span>{escape(tag["name"])}</{element}>')
+
+
+def tag_badges(meta, link=False):
+    return ''.join(tag_badge(t, link) for t in article_tags(meta)) or '<span class="tag-pill tag-unassigned">未分类</span>'
+
+
+def validate_articles(data, content_dir=CONTENT, authors=None, tags=None):
     """检查 articles.json。slug 只能是小写字母、数字和连字符，对应的 Markdown 必须在 content/ 里，作者必须在 authors.json 里。"""
     authors = read_authors() if authors is None else authors
     if not isinstance(data, list) or not data:
@@ -583,6 +640,7 @@ def validate_articles(data, content_dir=CONTENT, authors=None):
             raise BuildError(f'articles.json：slug「{slug}」重复')
         if meta['category'].strip() == ALL:
             raise BuildError(f'articles.json：{where} 的分类不能叫「{ALL}」')
+        tag_ids = article_tag_ids(meta, tags)
         path = (content_dir/f'{slug}.md').resolve()
         if path.parent != root or not path.is_file():
             raise BuildError(f'articles.json：找不到 content/{slug}.md')
@@ -614,7 +672,7 @@ def validate_articles(data, content_dir=CONTENT, authors=None):
                     or not isinstance(minutes, int) or isinstance(minutes, bool) or not 0 < minutes <= 10000):
                 raise BuildError(f'articles.json：{where} 的 recipe 只用于食谱，写成 {{"servings": "2 人份", "minutes": 30}}')
         seen.add(slug)
-        articles.append({**meta, 'path': path, 'author_list': [authors[i] for i in ids]})
+        articles.append({**meta, 'tags': tag_ids, 'path': path, 'author_list': [authors[i] for i in ids]})
     return articles
 
 
@@ -650,8 +708,8 @@ def shell(title, description, body, relative='', article=None, noindex=False, pa
     canonical = ORIGIN+BASE+relative
     # 写作页可能连接 GitHub 令牌，不能加载第三方统计；草稿和 404 也不累计阅读量。
     website_id = SITE_STATE.get('analytics_website_id', '')
-    track = (website_id and relative not in ('write/', '404.html')
-             and 'editor-page' not in page.split() and not (article and article.get('draft')))
+    track = (website_id and relative not in ('write/', 'labels/', '404.html')
+             and not {'editor-page', 'manage-page'}.intersection(page.split()) and not (article and article.get('draft')))
     analytics = tracking_markup(website_id) if track else ''
     if track:
         csp = tracking_csp(csp)
@@ -687,6 +745,7 @@ def shell(title, description, body, relative='', article=None, noindex=False, pa
 {''.join(f'<link rel="stylesheet" href="{ASSET_URLS[name]}">' for name in styles)}
 <link rel="alternate" type="application/rss+xml" title="ByteLife 更新" href="{BASE}feed.xml">
 {structured}
+<script src="{ASSET_URLS['labels.js']}" defer></script>
 <script src="{ASSET_URLS['site.js']}" defer></script>
 {''.join(f'<script src="{ASSET_URLS[name]}" defer></script>' for name in scripts)}
 {analytics}
@@ -793,7 +852,7 @@ def article_page(meta, html, toc, archive=None, revs=()):
         notice = (f'<div class="archive-notice"><p>这是 {meta["created"]} 的旧版存档，在线下载和安装步骤已经变了。</p>'
                   f'<a href="{public_url(archive)}">阅读当前修订版{icon("arrow-right")}</a></div>')
     else:
-        kicker = f'<a class="badge" href="{BASE}?c={quote(meta["category"])}">{escape(meta["category"])}</a>'
+        kicker = tag_badges(meta, link=True)
         kicker += DRAFT_BADGE if meta.get('draft') else ''
         notice = ''
     facts = ''.join(f'<span>{fact}</span>' for fact in recipe_facts(meta))
@@ -846,8 +905,8 @@ def entry_html(meta, show_author=False):
         note = (f'<p class="entry-note"><a href="{url}#{quote(n["anchor"])}"><span class="note-tag">{escape(n["date"])} 更新</span>'
                 f'<span class="note-text">{escape(n["text"])}</span>{icon("arrow-right")}</a></p>')
     facts = ''.join(f'<span>{fact}</span>' for fact in recipe_facts(meta))
-    return (f'<li class="entry" data-slug="{escape(meta["slug"])}" data-category="{escape(meta["category"])}">'
-            f'<p class="entry-meta"><span class="entry-cat">{escape(meta["category"])}</span>'
+    return (f'<li class="entry" data-slug="{escape(meta["slug"])}" data-tags="{escape(json.dumps(article_tag_ids(meta)))}">'
+            f'<p class="entry-meta">{tag_badges(meta, link=True)}'
             f'{f"<span class=entry-author>{byline(meta, link=False)}</span>" if show_author else ""}'
             f'<span>更新 <time datetime="{meta["updated"]}">{meta["updated"]}</time></span>{facts}'
             f'{DRAFT_BADGE if meta.get("draft") else ""}{bookmark_button(meta["slug"], meta["title"])}</p>'
@@ -857,16 +916,16 @@ def entry_html(meta, show_author=False):
 
 def editor_page(catalog, authors):
     """写作页：页面本身是静态的，文章内容由浏览器向 GitHub 接口读取；这里只放文章列表、模板和渲染规则。"""
-    fields = ('slug', 'title', 'category', 'type', 'author', 'summary', 'created', 'updated', 'draft', 'recipe')
+    fields = ('slug', 'title', 'category', 'tags', 'type', 'author', 'summary', 'created', 'updated', 'draft', 'recipe')
     data = {
         'repo': REPO.removeprefix('https://github.com/'), 'branch': 'main', 'base': BASE, 'all': ALL,
+        'tags': TAGS,
         'types': {key: label for key, (label, _) in TYPES.items()}, 'languages': LANGUAGES, 'callouts': CALLOUTS,
         'templates': {key: (ROOT/'scripts'/'templates'/f'{key}.md').read_text(encoding='utf-8') for key in TYPES},
         'authors': [{key: a[key] for key in ('id', 'name', 'github') if key in a} for a in authors.values()],
         'articles': [{key: meta[key] for key in fields if key in meta}
                      for meta in sorted(catalog, key=lambda a: (a['created'], a['slug']), reverse=True)],
     }
-    categories = ''.join(f'<option value="{escape(c)}"></option>' for c in dict.fromkeys(a['category'] for a in catalog))
     types = ''.join(f'<option value="{key}">{label}</option>' for key, (label, _) in TYPES.items())
     writers = ''.join(f'<label class="check"><input type="checkbox" value="{escape(a["id"])}">{escape(a["name"])}</label>' for a in authors.values())
     blob = json.dumps(data, ensure_ascii=False).replace('<', '\\u003c')
@@ -879,7 +938,7 @@ def editor_page(catalog, authors):
 <section id="ed-meta" class="ed-meta" aria-label="文章信息">
 <div class="ed-fields">
 <label class="ed-title">标题<textarea id="m-title" rows="2" placeholder="填写文章标题"></textarea></label>
-<label>分类标签<input id="m-category" list="ed-categories" placeholder="例如 CS、Windows"></label><datalist id="ed-categories">{categories}</datalist>
+<fieldset class="ed-labels"><legend>文章标签 · 可多选</legend><div id="m-tags" class="tag-options"></div><div class="ed-label-actions"><a href="{BASE}labels/" target="_blank" rel="noopener">管理名称与颜色 ↗</a><button type="button" class="text-button" id="ed-refresh-tags">刷新标签</button></div></fieldset>
 <label class="wide">摘要（标题下方的介绍）<textarea id="m-summary" rows="2" placeholder="用一段话介绍这篇文章"></textarea></label>
 </div>
 <details id="ed-options" class="ed-options"><summary>更多设置</summary><div class="ed-fields ed-extra">
@@ -904,7 +963,7 @@ def editor_page(catalog, authors):
 def author_page(author, articles):
     """作者分区页：作者简介和 TA 写的全部文章。"""
     mine = [a for a in articles if author['id'] in author_ids(a)]
-    categories = '、'.join(dict.fromkeys(a['category'] for a in mine))
+    categories = '、'.join(dict.fromkeys(t['name'] for a in mine for t in article_tags(a)))
     facts = [f'{len(mine)} 篇文章'] + ([f'分类：{escape(categories)}'] if categories else [])
     if author.get('github'):
         facts.append(f'<a class="meta-link" href="https://github.com/{author["github"]}">GitHub @{escape(author["github"])}</a>')
@@ -931,7 +990,7 @@ def authors_index(authors, articles):
     rows = []
     for author in authors.values():
         mine = [a for a in articles if author['id'] in author_ids(a)]
-        categories = '、'.join(dict.fromkeys(a['category'] for a in mine))
+        categories = '、'.join(dict.fromkeys(t['name'] for a in mine for t in article_tags(a)))
         kinds = f'<span>{escape(categories)}</span>' if categories else ''
         bio = f'<p class="entry-summary">{escape(author.get("bio", ""))}</p>' if author.get('bio') else ''
         rows.append(f'<li class="entry"><p class="entry-meta"><span>{len(mine)} 篇文章</span>{kinds}</p>'
@@ -975,12 +1034,13 @@ def utility_dialog():
 
 
 def home_page(articles, index_url, now=''):
-    categories = list(dict.fromkeys(a['category'] for a in articles))
-    counts = [(ALL, len(articles))]+[(c, sum(a['category'] == c for a in articles)) for c in categories]
+    counts = [(ALL, ALL, '', len(articles))]+[(t['id'], t['name'], t['color'], sum(t['id'] in article_tag_ids(a) for a in articles)) for t in TAGS]
+    counts.append(('_none', '未分类', 'slate', sum(not article_tag_ids(a) for a in articles)))
     chips = ''.join(
-        f'<button class="chip{" is-active" if name == ALL else ""}" type="button" data-category="{escape(name)}" '
-        f'aria-pressed="{"true" if name == ALL else "false"}">{escape(name)}<span class="chip-count" data-total="{count}">{count}</span></button>'
-        for name, count in counts)
+        f'<button class="chip{" is-active" if tid == ALL else ""}" type="button" data-category="{escape(tid)}" data-label="{escape(name)}" '
+        f'aria-pressed="{"true" if tid == ALL else "false"}"><span class="tag-dot" data-tag-color="{color or "slate"}" aria-hidden="true"></span>'
+        f'<span class="chip-label">{escape(name)}</span><span class="chip-count" data-total="{count}">{count}</span></button>'
+        for tid, name, color, count in counts)
     latest = max(a['updated'] for a in articles)
     multi = SITE_STATE['multi_author']
     count = len({i for a in articles for i in author_ids(a)})
@@ -990,16 +1050,20 @@ def home_page(articles, index_url, now=''):
     note = f'<p class="home-now"><span>正在折腾</span>{escape(now)}</p>' if now else ''
     return f'''<main id="main" class="home-main home-workspace">
 <aside class="home-rail" aria-label="首页工具">
-<details class="home-toolbox" open><summary>阅读与工具{icon('chevron')}</summary><div class="home-toolbox-body">
+<details class="home-toolbox" open><summary>分类与阅读{icon('chevron')}</summary><div class="home-toolbox-body">
 <nav class="rail-nav js-only" aria-label="文章视图"><button class="rail-button is-active" type="button" data-library-view="all" aria-pressed="true">{icon('list')}全部文章<span>{len(articles)}</span></button><button class="rail-button" type="button" data-library-view="saved" aria-pressed="false">{icon('bookmark')}我的收藏<span data-saved-count>0</span></button></nav>
+<section class="rail-section rail-labels" aria-labelledby="labels-title"><div class="rail-section-head"><h2 id="labels-title">按标签浏览</h2><a href="{BASE}labels/" class="rail-manage">管理标签</a></div><div class="chips label-nav" role="group" aria-label="按标签筛选">{chips}</div></section>
+<details class="rail-extras" open><summary>更多阅读工具{icon('chevron')}</summary><div>
 <section class="rail-section js-only" aria-labelledby="resume-title"><h2 id="resume-title">继续阅读</h2><p class="rail-empty" id="resume-empty">读过文章后，这里会记住你的位置。</p><a class="resume-link" id="resume-link" hidden><span id="resume-name"></span><span class="resume-meta" id="resume-meta"></span><progress id="resume-progress" max="100" value="0" aria-label="上次阅读进度"></progress></a></section>
 <section class="rail-section" aria-labelledby="tools-title"><h2 id="tools-title">常用工具</h2><button class="rail-button js-only" type="button" data-open-tool="json">{icon('code')}JSON 格式化</button><button class="rail-button js-only" type="button" data-open-tool="timestamp">{icon('clock')}时间戳转换</button><a class="rail-button" href="{BASE}articles/git-basics/#git-commands-a">{icon('list')}Git 命令速查{icon('arrow-right')}</a></section>
 <section class="rail-section" aria-labelledby="recent-title"><h2 id="recent-title">最近更新</h2><ol class="rail-recent">{recent}</ol></section>
 <a class="rail-feedback" href="{REPO}/discussions">提问与反馈{icon('external')}</a>
 </div></details>
+</div></details>
 </aside>
 <div class="home-content">
 <section class="intro" aria-labelledby="intro-title">
+<div class="intro-eyebrow"><span>BYTELIFE / NOTEBOOK</span><a href="{BASE}write/">写文章 {icon('arrow-right')}</a></div>
 <h1 id="intro-title">Milo 的笔记</h1>
 <p>记录我学编程、修电脑时遇到的问题和解决过程，以后也写做菜和生活。</p>
 <p class="intro-meta">{len(articles)} 篇文章{writers} · 最近更新 <time datetime="{latest}">{latest}</time></p>
@@ -1013,13 +1077,37 @@ def home_page(articles, index_url, now=''):
 <button class="icon-button search-clear" type="button" aria-label="清空搜索" hidden>{icon('close')}</button>
 <kbd class="search-key" aria-hidden="true">/</kbd>
 </div>
-<div class="chips" role="group" aria-label="按分类筛选">{chips}</div>
 <p id="search-status" class="search-status" role="status"></p>
 <div id="search-notice" class="search-notice" hidden></div>
 <ol id="article-list" class="entries" data-index="{index_url}" data-multi-author="{str(multi).lower()}">{''.join(entry_html(a, multi) for a in articles)}</ol>
 </section>
 </div>
-</main>{utility_dialog()}'''
+</main>{utility_dialog()}<script type="application/json" id="tag-data">{json.dumps(TAGS, ensure_ascii=False).replace('<', chr(92)+'u003c')}</script>'''
+
+
+def manager_page(catalog):
+    """管理页只提供标签和文章元数据；认证后才能写回 GitHub。"""
+    fields = ('slug', 'title', 'category', 'tags', 'updated', 'draft')
+    data = {'repo': REPO.removeprefix('https://github.com/'), 'branch': 'main', 'base': BASE, 'tags': TAGS,
+            'articles': [{k: a[k] for k in fields if k in a} for a in catalog]}
+    blob = json.dumps(data, ensure_ascii=False).replace('<', '\\u003c')
+    return f'''<main id="main" class="label-manager" aria-busy="true">
+<a class="back-link" href="{BASE}">{icon('arrow-left')}回到笔记</a>
+<header class="manager-heading"><div><p class="manager-eyebrow">整理你的笔记</p><h1>标签管理</h1><p>给标签取个名字，选一种颜色，再把文章放进去。</p></div><a class="button" href="{BASE}write/">写文章 {icon('arrow-right')}</a></header>
+<div class="manager-savebar"><div><span class="save-indicator" aria-hidden="true"></span><p id="manager-status" role="status" aria-live="polite" tabindex="-1">正在载入标签……</p></div><div class="manager-save-actions"><button class="button" id="manager-connect" type="button">连接 GitHub</button><button class="button button-primary" id="manager-publish" type="button" disabled>发布更改</button></div></div>
+<p id="manager-message" class="manager-message" role="status" hidden></p>
+<div class="manager-grid">
+<section class="manager-panel tag-library" aria-labelledby="tag-library-title"><div class="panel-heading"><div><h2 id="tag-library-title">我的标签 <span id="tag-total"></span></h2><p>点击标签，修改名称和颜色。</p></div><button class="button button-small" id="tag-new" type="button">＋ 新建</button></div><div id="tag-list" class="manager-tag-list"></div><div class="manager-help"><p>一篇文章可以使用多个标签。改名或换颜色，会同步更新使用它的文章。</p></div></section>
+<section class="manager-panel article-library" aria-labelledby="article-library-title"><div class="panel-heading"><div><h2 id="article-library-title">给文章分类 <span id="article-total"></span></h2><p>逐篇选择，或者勾选多篇一起整理。</p></div></div>
+<div class="manager-filters"><label class="manager-search"><span class="visually-hidden">搜索文章</span>{icon('search')}<input id="manager-search" type="search" placeholder="搜索文章标题" autocomplete="off"></label><label><span class="visually-hidden">筛选文章标签</span><select id="manager-filter" aria-label="筛选文章标签"><option value="">全部标签</option></select></label></div>
+<div class="selection-bar"><label class="check"><input type="checkbox" id="select-visible">选择当前列表</label><span id="selection-count">未选择文章</span><button class="text-button" id="selection-clear" type="button" hidden>清空选择</button></div>
+<div id="batch-actions" class="batch-actions" hidden><span>批量整理</span><button class="button button-small" id="batch-add" type="button">添加标签</button><button class="button button-small" id="batch-remove" type="button">移除标签</button></div>
+<ol id="manager-articles" class="manager-articles"></ol>
+</section></div>
+<footer class="manager-footer"><p>更改会暂存在这个浏览器。点击“发布更改”后，网站和其他设备才会同步。</p><div><button class="text-button" type="button" id="manager-export">导出草稿备份</button><button class="text-button" type="button" id="manager-reload">重新载入线上版本</button></div></footer>
+<noscript><p>标签管理需要启用 JavaScript。</p></noscript>
+</main><dialog id="manager-dialog" class="manager-dialog" aria-labelledby="manager-dialog-title"></dialog>
+<script type="application/json" id="manager-data">{blob}</script>'''
 
 
 # ---------- 输出 ----------
@@ -1068,7 +1156,7 @@ def copy_assets():
     for name, expected in VENDOR_HASHES.items():
         if sha256((source/name).read_bytes()).hexdigest() != expected:
             raise BuildError(f'assets/{name} 和记录的哈希不一致，可能被改动过；请从 npm 官方包重新取得')
-    for name in ('site.css', 'site.js', 'home.js', 'editor.css', 'editor.js', VENDOR_MARKDOWN_IT):
+    for name in (*ASSET_NAMES, VENDOR_MARKDOWN_IT):
         digest = sha256((source/name).read_bytes()).hexdigest()[:10]
         ASSET_URLS[name] = f'{BASE}assets/{name}?v={digest}'
     return skipped
@@ -1089,6 +1177,7 @@ def main(argv=None):
     SITE_STATE['analytics_website_id'] = '' if options.drafts else website_id
     authors = read_authors()
     owner = next(iter(authors.values()))
+    TAGS[:] = validate_tags(json.loads((ROOT/'tags.json').read_text(encoding='utf-8')))
     catalog = validate_articles(json.loads((ROOT/'articles.json').read_text(encoding='utf-8')), authors=authors)
     articles = list(catalog)
     drafts = [a['slug'] for a in articles if a.get('draft')]
@@ -1112,7 +1201,7 @@ def main(argv=None):
         write(f'articles/{meta["slug"]}/index.html', shell(meta['title'], meta['summary'], body, f'articles/{meta["slug"]}/', meta,
                                                            noindex=bool(meta.get('draft')), page='page article'))
         search.append({key: meta[key] for key in ('slug', 'title', 'category', 'summary', 'updated')}
-                      | {'authors': byline(meta, link=False), 'url': public_url(meta['slug']), 'sections': sections(html)})
+                      | {'tags': article_tags(meta), 'authors': byline(meta, link=False), 'url': public_url(meta['slug']), 'sections': sections(html)})
 
     archive_meta = {
         'slug': 'minecraft-pcl-2026-10-05', 'title': '从 PCL 玩明白，到用 VS Code 写出第一个 Minecraft Java 模组（原文存档）',
@@ -1135,6 +1224,9 @@ def main(argv=None):
                                     editor_page(catalog, authors),
                                     'write/', noindex=True, page='page editor-page', csp=EDITOR_CSP,
                                     styles=('editor.css',), scripts=(VENDOR_MARKDOWN_IT, 'editor.js')))
+    write('labels/index.html', shell('标签管理', '管理 ByteLife 标签的名称、颜色和文章分类。', manager_page(catalog),
+                                     'labels/', noindex=True, page='page manage-page', csp=MANAGE_CSP,
+                                     styles=('manager.css',), scripts=('manager.js',)))
 
     html, _ = render((ROOT/'MIGRATION.md').read_text(encoding='utf-8'))
     write('migration/index.html', shell('从论坛迁到这里', 'ByteLife 公开文章、配图和历史版本的迁移记录。',

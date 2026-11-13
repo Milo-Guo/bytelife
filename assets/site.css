@@ -523,6 +523,42 @@ html:has(dialog.lightbox[open]) { overflow: hidden; }
 .single h1 { font-size: 30px; line-height: 1.35; margin: 0 0 16px; }
 .not-found p { color: var(--ink-2); }
 
+/* ---------- 标签：所有颜色来自同一套预设，名称不依赖颜色辨认 ---------- */
+[data-tag-color="blue"] { --tag-color: #4965d1; }
+[data-tag-color="teal"] { --tag-color: #208b87; }
+[data-tag-color="violet"] { --tag-color: #9461c9; }
+[data-tag-color="orange"] { --tag-color: #ce7b32; }
+[data-tag-color="sky"] { --tag-color: #3e91bf; }
+[data-tag-color="green"] { --tag-color: #579054; }
+[data-tag-color="rose"] { --tag-color: #c25f7e; }
+[data-tag-color="slate"] { --tag-color: #8a8e98; }
+.tag-dot { display: inline-block; flex: 0 0 auto; width: 8px; height: 8px; border-radius: 50%; background: var(--tag-color, #8a8e98); }
+.tag-pill { display: inline-flex; align-items: center; gap: 7px; max-width: 100%; padding: 3px 8px; border: 1px solid var(--line); border-radius: 6px; color: var(--ink-2); font-size: 12px; line-height: 1.5; overflow-wrap: anywhere; }
+a.tag-pill { position: relative; z-index: 2; transition: border-color var(--fast); }
+a.tag-pill:hover { border-color: var(--line-strong); background: var(--hover); text-decoration: none; }
+.tag-unassigned { color: var(--muted); border-style: dashed; }
+.article-kicker { display: flex; flex-wrap: wrap; gap: 8px; }
+.article-kicker .tag-pill { font-size: 13px; }
+.rail-section-head { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; margin-bottom: 8px; }
+.rail-section-head h2 { margin-bottom: 0; }
+.rail-manage { color: var(--accent); font-size: 12px; white-space: nowrap; }
+.label-nav.chips { display: grid; gap: 3px; margin: 0; padding: 0; border: 0; }
+.label-nav .chip { display: flex; gap: 10px; width: 100%; height: auto; min-height: 36px; padding: 7px 10px; border: 0; border-radius: 6px; text-align: left; color: var(--ink-2); }
+.label-nav .chip::after { display: none; }
+.label-nav .chip-label { flex: 1; overflow-wrap: anywhere; }
+.label-nav .chip.is-active { color: var(--accent); background: var(--accent-soft); }
+.label-nav .chip:not(.is-active):hover { background: var(--hover); }
+.label-nav .chip-count { display: inline; min-width: 18px; margin: 0; text-align: right; font-variant-numeric: tabular-nums; color: var(--muted); }
+.rail-extras > summary { display: none; }
+.intro-eyebrow { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 17px; font: 11px var(--mono); letter-spacing: .08em; color: var(--muted); }
+.intro-eyebrow a { display: inline-flex; align-items: center; gap: 5px; color: var(--accent); font: 13px var(--sans); letter-spacing: 0; }
+.intro-eyebrow .icon { width: 15px; height: 15px; }
+.tag-options { display: flex; flex-wrap: wrap; gap: 8px; }
+.tag-option { display: inline-flex; align-items: center; gap: 8px; min-height: 38px; padding: 6px 10px; border: 1px solid var(--line); border-radius: 7px; cursor: pointer; font-size: 13px; overflow-wrap: anywhere; }
+.tag-option:has(input:checked) { background: var(--accent-soft); border-color: var(--accent); }
+.tag-option input { width: 15px; height: 15px; flex: 0 0 auto; accent-color: var(--accent); }
+.tag-option .tag-pill { padding: 0; border: 0; }
+
 /* ---------- 动效 ---------- */
 @keyframes dim { from { background-color: transparent; } }
 @keyframes rise { from { transform: translateY(6px); } }
@@ -543,6 +579,11 @@ html:has(dialog.lightbox[open]) { overflow: hidden; }
   .home-toolbox > summary::-webkit-details-marker { display: none; }
   .home-toolbox[open] > summary .icon { transform: rotate(180deg); }
   .home-toolbox-body { padding: 12px 0 16px; }
+  .label-nav.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .label-nav .chip { width: auto; min-height: 40px; border: 1px solid var(--line); }
+  .rail-extras > summary { display: flex; justify-content: space-between; align-items: center; min-height: 44px; margin-top: 8px; color: var(--muted); font-size: 12px; cursor: pointer; }
+  .rail-extras > summary::-webkit-details-marker { display: none; }
+  .rail-labels { margin-top: 16px; }
   .rail-nav { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
   .rail-button { min-height: 44px; }
 }

@@ -2,137 +2,188 @@
   {
     "slug": "ai-takeover-ui-contract",
     "title": "AI 二次开发实操：旧项目接管、真实 UI 验收与文档同步门禁",
-    "category": "CS",
+    "category": "AI 编程",
     "type": "tutorial",
     "author": "milo",
     "summary": "完整整理11月10日2小时38分录课：旧项目接管、增量迁移、登录排错、小程序契约、四层Review、富文本文档门禁与数字人演示。附28节讲解、20幅课堂图、3张整理图、10份学习材料和全片时间轴。",
     "created": "2026-11-13",
-    "updated": "2026-11-13"
+    "updated": "2026-11-13",
+    "tags": [
+      "ai-coding",
+      "class-notes"
+    ]
   },
   {
     "slug": "apps-script-api-data-lab",
     "title": "情報学実習B完整拆解：Apps Script、YouTube、Gemini聊天与共享单车分析",
-    "category": "编程",
+    "category": "数据实践",
     "type": "tutorial",
     "author": "milo",
     "summary": "按11月13日课堂顺序，从变量、数组和JSON讲到邮编查询、YouTube循环、Gemini前后端、Places店铺表和Python数据分析。含33节讲解、7张关系图与统计图、中文注释代码包，并用4918条真实记录纠正统计口径。",
     "created": "2026-11-13",
-    "updated": "2026-11-13"
+    "updated": "2026-11-13",
+    "tags": [
+      "data-lab",
+      "class-notes"
+    ]
   },
   {
     "slug": "unity-vr-ar-lab",
     "title": "Unity VR／AR 实习完整拆解：读懂现成工程、人物移动、相机与点击放置",
-    "category": "编程",
+    "category": "Unity",
     "type": "tutorial",
     "author": "milo",
     "summary": "从11月6日课堂工程出发，拆解GameObject、Prefab、地形、人物控制、相机跟随、OpenXR、ARCore与Android构建。附7张原创关系图、PlaceOnPlane完整代码解析、5个练习和排错清单，并校正课件中的版本差异。",
     "created": "2026-11-13",
-    "updated": "2026-11-13"
+    "updated": "2026-11-13",
+    "tags": [
+      "unity",
+      "class-notes"
+    ]
   },
   {
     "slug": "ai-integration-acceptance",
     "title": "AI 编程实操：分层规则、跨端接线与并发验收，附 18 幅课堂图",
-    "category": "CS",
+    "category": "AI 编程",
     "type": "tutorial",
     "author": "milo",
     "summary": "完整整理11月8日录课：后端分层、筛选控件、模块跨端接线、Playwright验收、共享测试库与工作树冲突、F59真题导入和提示词复盘。附18幅课堂图、2张整理图、10份学习材料与指挥Agent操作手册。",
     "created": "2026-11-09",
-    "updated": "2026-11-09"
+    "updated": "2026-11-09",
+    "tags": [
+      "ai-coding",
+      "class-notes"
+    ]
   },
   {
     "slug": "tdd-agent-delivery",
     "title": "从功能设计到开发交付：TDD、PM 派单与三层验收，附 18 幅实机图",
-    "category": "CS",
+    "category": "AI 编程",
     "type": "tutorial",
     "author": "milo",
     "summary": "完整复盘11月6日会议：单卡红绿测试、AC与用例台账、独立三层验收、空库与迁移、API文档回写和PM看板派单。附18幅实机图、2张整理图、8份可填写材料、逐步操作手册与全片时间轴。",
     "created": "2026-11-08",
-    "updated": "2026-11-08"
+    "updated": "2026-11-08",
+    "tags": [
+      "ai-coding",
+      "class-notes"
+    ]
   },
   {
     "slug": "feature-design-security",
     "title": "02c 功能设计实操：多端规格、接口契约与安全要求同步，附 18 张实机图",
-    "category": "CS",
+    "category": "AI 编程",
     "type": "tutorial",
     "author": "milo",
     "summary": "完整整理1103上下半场材料：一端一文档、七项功能规格、F/AC/API映射、12条接口缺口、安全要求回写与最终58功能统计。附18张实机图、2张整理图、技术校正、可填写提示词和逐步操作手册。",
     "created": "2026-11-05",
-    "updated": "2026-11-05"
+    "updated": "2026-11-05",
+    "tags": [
+      "ai-coding",
+      "class-notes"
+    ]
   },
   {
     "slug": "k8-exam-system-workflow",
     "title": "K8 会考系统实操：需求、架构、接口与建表流程拆解，附 18 张实机图",
-    "category": "CS",
+    "category": "AI 编程",
     "type": "tutorial",
     "author": "milo",
     "summary": "复盘 K8 示例的需求、架构、接口与数据设计。新增操作手册：换成自己的项目，逐步填写和发送四份提示词，指挥 agent 拆任务、开发、验收与续接。附 18 张实机图、3 张流程图、修订模板与回看索引。",
     "created": "2026-11-02",
-    "updated": "2026-11-02"
+    "updated": "2026-11-02",
+    "tags": [
+      "ai-coding",
+      "class-notes"
+    ]
   },
   {
     "slug": "requirements-and-architecture",
     "title": "AI 编程：需求文档、验收标准与架构设计，附实机图和练习文件",
-    "category": "CS",
+    "category": "AI 编程",
     "type": "tutorial",
     "author": "milo",
     "summary": "完整复盘10月28日录课，从十句话梳理想法、角色权限和F/AC编号，讲到架构分层、Nginx与服务端校验。附7张课堂实机图、需求与架构提示词、记账本示例和全程回看索引。",
     "created": "2026-10-29",
-    "updated": "2026-10-29"
+    "updated": "2026-10-29",
+    "tags": [
+      "ai-coding",
+      "class-notes"
+    ]
   },
   {
     "slug": "ai-development-rules",
     "title": "AI 开发先定规则：CLAUDE.md、AGENTS.md 与六阶段流程，附可复制模板",
-    "category": "编程",
+    "category": "AI 编程",
     "type": "tutorial",
     "author": "milo",
     "summary": "完整复盘10月26日录课，从项目问卷、规则文件与代码分层讲到 Skills、MCP 和验收。附三张流程图、初始化提示词、规则模板及全程回看索引。",
     "created": "2026-10-27",
-    "updated": "2026-10-27"
+    "updated": "2026-10-27",
+    "tags": [
+      "ai-coding",
+      "class-notes"
+    ]
   },
   {
     "slug": "full-stack-practice",
     "title": "技术栈实机入门：从启动第一个商品项目到 Docker、服务器部署",
-    "category": "编程",
+    "category": "编程基础",
     "type": "tutorial",
     "author": "milo",
     "summary": "11 张真实来源截图，带着零基础读者打开编辑器、运行程序、保存商品、调用接口和查询数据库，再学习 Docker、MySQL、Redis 与 Linux 部署。附可下载源码。",
     "created": "2026-10-25",
-    "updated": "2026-10-25"
+    "updated": "2026-10-25",
+    "tags": [
+      "programming",
+      "class-notes"
+    ]
   },
   {
     "slug": "full-stack-overview",
     "title": "技术栈全景图：零基础读懂前端、后端、数据库与 AI 开发流程",
-    "category": "编程",
+    "category": "编程基础",
     "type": "tutorial",
     "author": "milo",
     "summary": "根据完整录课、17 页课件和补充图，逐项解释软件与术语，用商品管理串起页面、接口、数据、部署与 AI 工具，说明学习顺序及容易混淆的说法。",
     "created": "2026-10-25",
-    "updated": "2026-10-25"
+    "updated": "2026-10-25",
+    "tags": [
+      "programming",
+      "class-notes"
+    ]
   },
   {
     "slug": "github-project-deployment",
     "title": "GitHub 项目从下载到部署：用 dsh-purge 学排错、更新、独立备份与公开／私有设置",
-    "category": "编程",
+    "category": "编程基础",
     "type": "tutorial",
     "author": "milo",
     "summary": "从 GitHub 页面各按钮讲起，用一次真实的 Harness 插件部署与 {{cwd}} 修复，串起安装验证、版本更新、防删库备份、离线恢复和仓库公开／私有设置。",
     "created": "2026-10-23",
-    "updated": "2026-10-23"
+    "updated": "2026-10-23",
+    "tags": [
+      "programming"
+    ]
   },
   {
     "slug": "colab-ai-spatial-lab",
     "title": "从计算器到 AI 人物检测、3D 点云：Colab 实习完整代码解析与复现",
-    "category": "编程",
+    "category": "数据实践",
     "type": "tutorial",
     "author": "milo",
     "summary": "四个 Python 程序逐段讲解，串起 Colab、Streamlit、YOLO、ngrok 与 RANSAC。附源码、四份笔记本、视频和点云下载，以及当天报错的排查过程。",
     "created": "2026-10-23",
-    "updated": "2026-10-23"
+    "updated": "2026-10-23",
+    "tags": [
+      "data-lab",
+      "class-notes"
+    ]
   },
   {
     "slug": "git-basics",
     "title": "Git 零基础完整教程：从安装到 GitHub，附核心命令速查表",
-    "category": "编程",
+    "category": "编程基础",
     "type": "tutorial",
     "author": "milo",
     "summary": "从第一次提交到分支协作，把工作区、暂存区和 GitHub 的关系讲清楚。附按用途分类的命令速查表。",
@@ -140,7 +191,10 @@
     "updated": "2026-10-22",
     "source": "https://bytelife.discourse.group/t/topic/7",
     "source_topic_id": 7,
-    "source_posts": 1
+    "source_posts": 1,
+    "tags": [
+      "programming"
+    ]
   },
   {
     "slug": "minecraft-mod",
@@ -158,7 +212,10 @@
     },
     "source": "https://bytelife.discourse.group/t/topic/8",
     "source_topic_id": 8,
-    "source_posts": 2
+    "source_posts": 2,
+    "tags": [
+      "minecraft"
+    ]
   },
   {
     "slug": "windowsapps",
@@ -171,7 +228,10 @@
     "updated": "2026-10-22",
     "source": "https://bytelife.discourse.group/t/topic/10",
     "source_topic_id": 10,
-    "source_posts": 1
+    "source_posts": 1,
+    "tags": [
+      "windows"
+    ]
   },
   {
     "slug": "desktop-icons",
@@ -184,6 +244,9 @@
     "updated": "2026-10-22",
     "source": "https://bytelife.discourse.group/t/topic/11",
     "source_topic_id": 11,
-    "source_posts": 1
+    "source_posts": 1,
+    "tags": [
+      "windows"
+    ]
   }
 ]

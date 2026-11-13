@@ -5,6 +5,8 @@
   'use strict';
   const $ = id => document.getElementById(id);
   const data = JSON.parse($('editor-data').textContent);
+  const labels = ByteLifeLabels;
+  let tags = labels.validateTags(data.tags);
   const API = 'https://api.github.com';
   const REPO = data.repo;
   const BRANCH = data.branch;
@@ -18,7 +20,7 @@
     preview: $('ed-preview'), head: $('ed-head'), body: $('ed-body'), meta: $('ed-meta'), info: $('ed-info'),
   };
   const field = {
-    title: $('m-title'), summary: $('m-summary'), category: $('m-category'), type: $('m-type'),
+    title: $('m-title'), summary: $('m-summary'), type: $('m-type'),
     updated: $('m-updated'), draft: $('m-draft'), servings: $('m-servings'), minutes: $('m-minutes'),
   };
   const authorBox = $('m-authors');
@@ -188,7 +190,9 @@
 
   function renderHead(meta) {
     const kicker = el('div', 'article-kicker');
-    kicker.append(el('span', 'badge', meta.category || '分类'));
+    const selectedTags = labels.itemsFor(meta, tags);
+    for (const tag of selectedTags) kicker.append(labels.badge(tag));
+    if (!selectedTags.length) kicker.append(el('span', 'tag-pill tag-unassigned', '未分类'));
     if (meta.draft) kicker.append(el('span', 'badge badge-draft', '草稿 · 未发布'));
     const facts = el('p', 'article-meta');
     facts.append(el('span', 'byline', asList(meta.author).map(authorName).join('、') || '（还没选作者）'), el('span', null, `发布 ${meta.created}`), el('span', null, `更新 ${meta.updated}`));
@@ -304,14 +308,30 @@
   els.body.addEventListener('load', measureSoon, true);   // 预览里的图片加载完，位置会变
 
   /* ---------- 文章信息 ---------- */
+  function tagChoices(container, selected = []) {
+    container.replaceChildren();
+    // 已被其他设备删除的标签仍显示出来，由用户明确取消，避免静默丢掉草稿关联。
+    const options = [...tags, ...selected.filter(id => !tags.some(t => t.id === id)).map(id => ({ id, name: `已移除：${id}`, color: 'slate' }))];
+    for (const tag of options) {
+      const label = el('label', 'tag-option');
+      const box = el('input'); box.type = 'checkbox'; box.value = tag.id; box.checked = selected.includes(tag.id);
+      label.append(box, labels.badge(tag)); container.append(label);
+    }
+    if (!options.length) container.append(el('p', 'ed-hint', '还没有标签，可以先到“管理名称与颜色”新建。'));
+  }
+  const selectedTags = container => [...container.querySelectorAll('input:checked')].map(box => box.value);
   function readMeta() {
     const base = (state.base && state.base.meta) || {};
     const minutes = parseInt(field.minutes.value, 10);
+    const checkedTags = selectedTags($('m-tags'));
+    const previousTags = state.tagOrder || [];
+    const articleTags = [...previousTags.filter(id => checkedTags.includes(id)), ...checkedTags.filter(id => !previousTags.includes(id))];
     const meta = {
-      slug: state.slug, title: field.title.value.trim(), category: field.category.value.trim(), type: field.type.value,
+      slug: state.slug, title: field.title.value.trim(), tags: articleTags, type: field.type.value,
       summary: field.summary.value.trim(), created: base.created || state.created || today(), updated: field.updated.value || today(),
       draft: field.draft.checked,
     };
+    meta.category = tags.find(t => t.id === meta.tags[0])?.name || '未分类';
     const ids = [...authorBox.querySelectorAll('input:checked')].map(input => input.value);
     meta.author = ids.length === 1 ? ids[0] : ids;
     if (meta.type === 'recipe') {
@@ -325,7 +345,8 @@
   function fillMeta(meta) {
     field.title.value = meta.title || '';
     field.summary.value = meta.summary || '';
-    field.category.value = meta.category || '';
+    state.tagOrder = labels.idsFor(meta, tags);
+    tagChoices($('m-tags'), state.tagOrder);
     field.type.value = meta.type || 'tutorial';
     field.updated.value = meta.updated || today();
     field.draft.checked = Boolean(meta.draft);
@@ -338,7 +359,7 @@
   }
   const compareMeta = meta => {
     const { slug, title, category, type, author, summary, created, updated, draft = false, recipe = null } = meta || {};
-    return { slug, title, category, type, author: asList(author), summary, created, updated, draft: Boolean(draft), recipe: recipe || null };
+    return { slug, title, category, tags: labels.idsFor(meta || {}, tags), type, author: asList(author), summary, created, updated, draft: Boolean(draft), recipe: recipe || null };
   };
   function problems(meta) {
     const list = [];
@@ -346,12 +367,21 @@
     if (!meta.title) list.push('标题不能为空');
     if (!asList(meta.author).length) list.push('至少选一位作者');
     if (!meta.summary) list.push('摘要不能为空');
-    if (!meta.category || meta.category === data.all) list.push(`分类不能为空，也不能叫“${data.all}”`);
+    try { labels.validateIds(meta.tags, tags); } catch (error) { list.push(error.message); }
     if (!/^\d{4}-\d{2}-\d{2}$/.test(meta.updated) || meta.updated < meta.created) list.push('更新日期不能早于发布日期');
     if (!els.text.value.trim()) list.push('正文是空的');
     return list;
   }
   authorBox.addEventListener('change', () => { renderHead(readMeta()); changed(); });
+  $('m-tags').addEventListener('change', () => { renderHead(readMeta()); changed(); });
+  $('ed-refresh-tags').addEventListener('click', async () => {
+    const selected = selectedTags($('m-tags'));
+    try {
+      tags = labels.validateTags(JSON.parse((await getFile('tags.json')).text));
+      tagChoices($('m-tags'), selected); renderHead(readMeta());
+      setStatus('标签已刷新。勾选需要的标签，和文章一起提交。');
+    } catch (error) { setStatus(error.message, 'error'); }
+  });
   Object.values(field).forEach(input => input.addEventListener('input', () => {
     els.meta.dataset.type = field.type.value;
     renderHead(readMeta());
@@ -584,7 +614,8 @@
   }
   async function getFile(path, ref = BRANCH) {
     const file = await api(`/repos/${REPO}/contents/${path}?ref=${encodeURIComponent(ref)}`);
-    return { text: decodeBase64(file.content), sha: file.sha };
+    // textarea 会统一换行；读取时一起统一，避免只改标签却把整篇正文当成修改。
+    return { text: decodeBase64(file.content).replace(/\r\n/g, '\n'), sha: file.sha };
   }
 
   /* ---------- 打开文章 ---------- */
@@ -681,7 +712,9 @@
       };
       const slug = input('英文名（也是网址的一部分）', { placeholder: 'tomato-egg', autocomplete: 'off', spellcheck: 'false' });
       const title = input('标题');
-      const category = input('分类', { list: 'ed-categories', placeholder: '编程、做菜、生活……' });
+      const category = el('fieldset', 'ed-labels');
+      category.append(el('legend', null, '文章标签 · 可多选'));
+      const choices = el('div', 'tag-options'); tagChoices(choices); category.append(choices); form.append(category);
       const type = input('类型', { tag: 'select' });
       Object.entries(data.types).forEach(([key, label]) => { const option = el('option', null, label); option.value = key; type.append(option); });
       const summary = input('一句话摘要', { tag: 'textarea', rows: '2' });
@@ -697,13 +730,11 @@
         who.append(label);
       }
       form.append(who);
-      category.addEventListener('input', () => {
-        if (/菜|食|烘焙/.test(category.value)) type.value = 'recipe'; else if (category.value === '生活') type.value = 'post';
-      });
       const error = el('p', 'ed-error');
       const create = button('创建草稿', () => {
         const ids = [...who.querySelectorAll('input:checked')].map(box => box.value);
-        const meta = { slug: slug.value.trim(), title: title.value.trim(), category: category.value.trim(), type: type.value,
+        const articleTags = selectedTags(choices);
+        const meta = { slug: slug.value.trim(), title: title.value.trim(), tags: articleTags, category: tags.find(t => t.id === articleTags[0])?.name || '未分类', type: type.value,
           author: ids.length === 1 ? ids[0] : ids, summary: summary.value.trim(), created: today(), updated: today(), draft: true };
         const taken = state.catalog.some(a => a.slug === meta.slug) || readRecord(meta.slug).working;
         const list = taken ? ['这个英文名已经用过了'] : problems({ ...meta, updated: meta.created }).filter(p => p !== '正文是空的');
@@ -764,7 +795,7 @@
   /* ---------- 提交 ---------- */
   function catalogEntry(existing, meta) {
     const entry = existing ? { ...existing } : {};
-    for (const key of ['slug', 'title', 'category', 'type', 'author', 'summary', 'created', 'updated']) entry[key] = meta[key];
+    for (const key of ['slug', 'title', 'category', 'tags', 'type', 'author', 'summary', 'created', 'updated']) entry[key] = meta[key];
     if (meta.draft) entry.draft = true; else delete entry.draft;
     if (meta.recipe) entry.recipe = meta.recipe; else delete entry.recipe;
     return entry;
@@ -781,6 +812,9 @@
     }
     const catalogFile = await getFile('articles.json', head);
     const catalog = JSON.parse(catalogFile.text);
+    const remoteTags = labels.validateTags(JSON.parse((await getFile('tags.json', head)).text));
+    labels.validateIds(meta.tags, remoteTags);
+    meta.category = remoteTags.find(t => t.id === meta.tags[0])?.name || '未分类';
     const index = catalog.findIndex(a => a.slug === state.slug);
     if (state.isNew && index >= 0) throw new ApiError(409, 'articles.json 里已经有这个英文名。');
     // 只检查当前文章，避免覆盖其他设备的标题、摘要或分类，同时保留其他文章的新改动。
@@ -791,14 +825,15 @@
     if (index >= 0) catalog[index] = entry; else catalog.push(entry);
     const catalogText = JSON.stringify(catalog, null, 2) + '\n';
     const files = [];
-    if (!remote || remote.text !== text) files.push({ path, mode: '100644', type: 'blob', content: text });
+    const contentChanged = !remote || remote.text !== text;
+    if (contentChanged) files.push({ path, mode: '100644', type: 'blob', content: text });
     if (catalogText !== catalogFile.text) files.push({ path: 'articles.json', mode: '100644', type: 'blob', content: catalogText });
     if (!files.length) throw new ApiError(0, '和 GitHub 上的内容一样，不需要提交。');
     const parent = await api(`/repos/${REPO}/git/commits/${head}`);
     const tree = await api(`/repos/${REPO}/git/trees`, { method: 'POST', body: { base_tree: parent.tree.sha, tree: files } });
     const created = await api(`/repos/${REPO}/git/commits`, { method: 'POST', body: { message, tree: tree.sha, parents: [head] } });
     await api(`/repos/${REPO}/git/refs/heads/${BRANCH}`, { method: 'PATCH', body: { sha: created.sha, force: false } });
-    return { sha: created.sha, blobSha: await gitBlobSha(text), entry, text };
+    return { sha: created.sha, blobSha: contentChanged ? await gitBlobSha(text) : remote.sha, entry, text };
   }
   // Git 给文件内容算的编号：sha1("blob 字节数\0内容")，下次提交时用来判断 GitHub 上有没有被别人改过。
   async function gitBlobSha(text) {
@@ -925,7 +960,10 @@
     const first = wanted && SLUG.test(wanted) ? wanted : (state.catalog[0] && state.catalog[0].slug);
     try {
       // 文章列表以 GitHub 上最新的 articles.json 为准，读不到就用页面里随网站发布的那份。
-      const latest = JSON.parse((await getFile('articles.json')).text);
+      const head = (await api(`/repos/${REPO}/git/ref/heads/${BRANCH}`)).object.sha;
+      const [tagFile, articleFile] = await Promise.all([getFile('tags.json', head), getFile('articles.json', head)]);
+      tags = labels.validateTags(JSON.parse(tagFile.text));
+      const latest = JSON.parse(articleFile.text);
       if (Array.isArray(latest)) { state.catalog = latest.filter(a => a && SLUG.test(a.slug)); fillSelect(); }
     } catch { /* 用页面自带的列表 */ }
     if (first) openArticle(first); else setStatus('还没有文章，点“新建”开始。');

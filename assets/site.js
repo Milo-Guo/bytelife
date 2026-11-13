@@ -195,10 +195,15 @@
     const clear = document.querySelector('.search-clear');
     const chips = [...document.querySelectorAll('.chip[data-category]')];
     const ALL = chips[0].dataset.category;
+    const tags = JSON.parse(document.getElementById('tag-data').textContent);
+    const labelName = () => chips.find(chip => chip.dataset.category === category)?.dataset.label || '全部';
+    const ids = article => article.tags.length ? article.tags.map(t => typeof t === 'string' ? t : t.id) : ['_none'];
+    const matchesTag = article => category === ALL || ids(article).includes(category);
+    const addCounts = (counts, article) => { for (const id of ids(article)) counts.set(id, (counts.get(id) || 0) + 1); };
     const entries = [...list.children];
     const staticData = entries.map(li => ({
-      li, slug: li.dataset.slug, category: li.dataset.category,
-      text: `${li.querySelector('.entry-title').textContent} ${li.querySelector('.entry-summary').textContent}`.toLowerCase(),
+      li, slug: li.dataset.slug, tags: JSON.parse(li.dataset.tags),
+      text: `${li.querySelector('.entry-title').textContent} ${li.querySelector('.entry-summary').textContent} ${[...li.querySelectorAll('.tag-pill')].map(t => t.textContent).join(' ')}`.toLowerCase(),
     }));
     let category = ALL;
     let savedOnly = new URLSearchParams(location.search).get('view') === 'saved';
@@ -222,7 +227,7 @@
         .then(data => {
           if (!Array.isArray(data)) throw new Error('索引格式不对');
           index = data.filter(a => typeof a.url === 'string' && a.url.startsWith(`${base}articles/`)).map(a => ({
-            ...a, titleLower: a.title.toLowerCase(), summaryLower: `${a.summary} ${a.authors || ''}`.toLowerCase(),
+            ...a, tags: a.tags || [], titleLower: a.title.toLowerCase(), summaryLower: `${a.summary} ${a.authors || ''} ${(a.tags || []).map(t => t.name).join(' ')}`.toLowerCase(),
             sections: a.sections.map(([id, title, text]) => ({ id, title, text, lower: text.toLowerCase(), titleLower: title.toLowerCase() })),
           }));
           return index;
@@ -289,7 +294,12 @@
       for (const { a, hits, total } of results) {
         const item = el('li', 'entry is-result');
         const meta = el('p', 'entry-meta');
-        meta.append(el('span', 'entry-cat', a.category));
+        for (const tag of a.tags) {
+          const badge = ByteLifeLabels.badge(tag, 'a');
+          badge.href = `${base}?t=${encodeURIComponent(tag.id)}`;
+          meta.append(badge);
+        }
+        if (!a.tags.length) meta.append(el('span', 'tag-pill tag-unassigned', '未分类'));
         if (list.dataset.multiAuthor === 'true' && a.authors) meta.append(el('span', 'entry-author', a.authors));
         meta.append(el('span', null, `更新 ${a.updated}`));
         if (total) meta.append(el('span', 'entry-hits', `正文 ${total} 处`));
@@ -355,15 +365,19 @@
     function showAll() {
       list.replaceChildren(...entries);
       let shown = 0;
-      for (const { li, slug, category: c } of staticData) {
-        li.hidden = !inView(slug) || (category !== ALL && c !== category);
+      const counts = new Map([[ALL, 0]]);
+      for (const article of staticData) {
+        const { li, slug } = article;
+        if (inView(slug)) { counts.set(ALL, counts.get(ALL) + 1); addCounts(counts, article); }
+        li.hidden = !inView(slug) || !matchesTag(article);
         if (!li.hidden) shown++;
       }
-      updateChips(null);
+      updateChips(counts);
       library.classList.remove('is-searching');
       hideNotice();
-      setStatus(savedOnly ? `我的收藏 · ${shown} 篇` : (category === ALL ? '' : `${category} · ${shown} 篇`));
+      setStatus(savedOnly ? `我的收藏 · ${labelName()} · ${shown} 篇` : `${labelName()} · ${shown} 篇`);
       if (savedOnly && !shown) showNotice('empty', category === ALL ? '还没有收藏文章。点文章旁的收藏按钮，以后就能在这里找到。' : '这个分类还没有收藏，试试其他分类。');
+      else if (!shown) showNotice('empty', '这个标签下还没有文章。可以到“管理标签”为文章添加标签。');
       syncBookmarks();
     }
 
@@ -372,10 +386,11 @@
       list.replaceChildren(...entries);
       const counts = new Map([[ALL, 0]]);
       let shown = 0;
-      for (const { li, slug, category: c, text } of staticData) {
+      for (const article of staticData) {
+        const { li, slug, text } = article;
         const match = inView(slug) && words.every(w => text.includes(w));
-        if (match) { counts.set(ALL, counts.get(ALL) + 1); counts.set(c, (counts.get(c) || 0) + 1); }
-        li.hidden = !match || (category !== ALL && c !== category);
+        if (match) { counts.set(ALL, counts.get(ALL) + 1); addCounts(counts, article); }
+        li.hidden = !match || !matchesTag(article);
         if (!li.hidden) shown++;
       }
       updateChips(counts);
@@ -388,12 +403,12 @@
     function showResults(words, query) {
       const all = search(words).filter(result => inView(result.a.slug));
       const counts = new Map([[ALL, all.length]]);
-      for (const r of all) counts.set(r.a.category, (counts.get(r.a.category) || 0) + 1);
+      for (const r of all) addCounts(counts, r.a);
       updateChips(counts);
       library.classList.add('is-searching');
-      const results = category === ALL ? all : all.filter(r => r.a.category === category);
+      const results = all.filter(r => matchesTag(r.a));
       renderResults(results, words);
-      const scope = category === ALL ? '' : `在“${category}”中`;
+      const scope = category === ALL ? '' : `在“${labelName()}”中`;
       if (results.length) {
         hideNotice();
         setStatus(`${scope}找到 ${results.length} 篇含“${query}”的文章，点章节名直接跳到那一段`);
@@ -401,7 +416,7 @@
       }
       setStatus(`${scope}没有找到“${query}”`);
       if (category !== ALL && all.length) {
-        showNotice('empty', `“${category}”里没有，其他分类有 ${all.length} 篇。`, [
+        showNotice('empty', `“${labelName()}”里没有，其他标签有 ${all.length} 篇。`, [
           [`在全部分类中查看（${all.length} 篇）`, () => { setCategory(ALL); chips[0].focus(); }, true],
           ['清空搜索', clearSearch]]);
       } else {
@@ -412,7 +427,8 @@
     function syncUrl(query) {
       const url = new URL(location.href);
       if (query) url.searchParams.set('q', query); else url.searchParams.delete('q');
-      if (category !== ALL) url.searchParams.set('c', category); else url.searchParams.delete('c');
+      if (category !== ALL) url.searchParams.set('t', category); else url.searchParams.delete('t');
+      url.searchParams.delete('c');
       if (savedOnly) url.searchParams.set('view', 'saved'); else url.searchParams.delete('view');
       if (url.href !== location.href) history.replaceState(history.state, '', url);
     }
@@ -501,10 +517,11 @@
     });
 
     const params = new URLSearchParams(location.search);
-    const initial = params.get('c');
+    const legacy = params.get('c');
+    const initial = params.get('t') || (tags.find(tag => tag.name === legacy) || tags.find(tag => tag.aliases?.includes(legacy)))?.id;
     input.value = (params.get('q') || '').slice(0, 100);
     if (initial && chips.some(chip => chip.dataset.category === initial)) setCategory(initial);
-    else if (input.value || savedOnly) run();
+    else run();
     if (location.hash === '#search') input.focus();
   }
 

@@ -103,7 +103,7 @@ def page_rules(path, page, errors):
         else:
             directives[parts[0]] = set(parts[1:])
     trackers = [attrs for attrs, _ in page.scripts if is_tracking_script(attrs)]
-    writing = name.startswith('write/')
+    writing = name.startswith(('write/', 'labels/'))
     if trackers:
         if writing:
             errors.append(f'{name}: 写作页不允许加载访问统计')
@@ -137,7 +137,7 @@ def page_rules(path, page, errors):
             digest = "'sha256-"+b64encode(sha256(text.encode()).digest()).decode()+"'"
             if digest not in page.csp:
                 errors.append(f'{name}: 内联脚本的哈希不在 CSP 里')
-    archived = name.startswith(('archive/', 'write/')) or name == '404.html'
+    archived = name.startswith(('archive/', 'write/', 'labels/')) or name == '404.html'
     if name.startswith('authors/'):
         return   # 作者页：只有一位作者或还没发表文章时不让收录，其余正常收录
     if archived and 'noindex' not in page.robots:
